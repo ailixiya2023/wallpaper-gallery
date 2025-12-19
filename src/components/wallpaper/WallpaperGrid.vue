@@ -1,23 +1,22 @@
 <script setup>
-import { ref, watch, nextTick } from 'vue'
-import WallpaperCard from './WallpaperCard.vue'
+import { nextTick, ref, watch } from 'vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import WallpaperCard from './WallpaperCard.vue'
 
 const props = defineProps({
   wallpapers: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   loading: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emit = defineEmits(['select'])
 
 // 用于控制列表显示的状态，避免闪烁
-const isReady = ref(true)
 const showGrid = ref(true)
 
 // 监听 wallpapers 变化，添加短暂的隐藏状态避免闪烁
@@ -33,7 +32,7 @@ watch(() => props.wallpapers, async (newVal, oldVal) => {
   }
 }, { deep: false })
 
-const handleSelect = (wallpaper) => {
+function handleSelect(wallpaper) {
   emit('select', wallpaper)
 }
 </script>
@@ -43,7 +42,9 @@ const handleSelect = (wallpaper) => {
     <!-- Loading State -->
     <div v-if="loading" class="grid-loading">
       <LoadingSpinner size="lg" />
-      <p class="loading-text">加载壁纸中...</p>
+      <p class="loading-text">
+        加载壁纸中...
+      </p>
     </div>
 
     <!-- Empty State -->

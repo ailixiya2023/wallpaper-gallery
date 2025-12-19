@@ -2,7 +2,7 @@
 // 壁纸数据管理 Composable
 // ========================================
 
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { WALLPAPERS_DATA_URL } from '@/utils/constants'
 
 const wallpapers = ref([])
@@ -13,7 +13,8 @@ const loaded = ref(false)
 export function useWallpapers() {
   // 加载壁纸数据
   const fetchWallpapers = async () => {
-    if (loaded.value) return // 避免重复加载
+    if (loaded.value)
+      return // 避免重复加载
 
     loading.value = true
     error.value = null
@@ -26,10 +27,12 @@ export function useWallpapers() {
       const data = await response.json()
       wallpapers.value = data.wallpapers || data
       loaded.value = true
-    } catch (e) {
+    }
+    catch (e) {
       console.error('Failed to fetch wallpapers:', e)
       error.value = e.message || '加载壁纸数据失败'
-    } finally {
+    }
+    finally {
       loading.value = false
     }
   }
@@ -39,12 +42,12 @@ export function useWallpapers() {
 
   // 根据 ID 获取单个壁纸
   const getWallpaperById = (id) => {
-    return wallpapers.value.find((w) => w.id === id)
+    return wallpapers.value.find(w => w.id === id)
   }
 
   // 获取壁纸在列表中的索引
   const getWallpaperIndex = (id) => {
-    return wallpapers.value.findIndex((w) => w.id === id)
+    return wallpapers.value.findIndex(w => w.id === id)
   }
 
   // 获取上一张壁纸
@@ -75,6 +78,6 @@ export function useWallpapers() {
     getWallpaperById,
     getWallpaperIndex,
     getPrevWallpaper,
-    getNextWallpaper
+    getNextWallpaper,
   }
 }

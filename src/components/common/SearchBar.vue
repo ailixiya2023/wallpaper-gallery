@@ -4,12 +4,12 @@ import { ref, watch } from 'vue'
 const props = defineProps({
   modelValue: {
     type: String,
-    default: ''
+    default: '',
   },
   placeholder: {
     type: String,
-    default: '搜索壁纸...'
-  }
+    default: '搜索壁纸...',
+  },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -23,22 +23,22 @@ watch(() => props.modelValue, (val) => {
   localValue.value = val
 })
 
-const handleInput = (e) => {
+function handleInput(e) {
   localValue.value = e.target.value
   emit('update:modelValue', e.target.value)
 }
 
-const clearInput = () => {
+function clearInput() {
   localValue.value = ''
   emit('update:modelValue', '')
   inputRef.value?.focus()
 }
 
-const handleFocus = () => {
+function handleFocus() {
   isFocused.value = true
 }
 
-const handleBlur = () => {
+function handleBlur() {
   isFocused.value = false
 }
 </script>
@@ -61,15 +61,15 @@ const handleBlur = () => {
       @input="handleInput"
       @focus="handleFocus"
       @blur="handleBlur"
-    />
+    >
 
     <!-- Clear Button -->
     <button
       v-if="localValue"
       class="clear-btn"
       type="button"
-      @click="clearInput"
       aria-label="清除搜索"
+      @click="clearInput"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M18 6L6 18M6 6l12 12" />

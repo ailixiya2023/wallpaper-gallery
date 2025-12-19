@@ -73,31 +73,49 @@ $breakpoint-xl: 1400px;
 // 响应式 mixin
 @mixin respond-to($breakpoint) {
   @if $breakpoint == 'xs' {
-    @media (max-width: #{$breakpoint-xs - 1}) { @content; }
+    @media (max-width: #{$breakpoint-xs - 1}) {
+      @content;
+    }
   } @else if $breakpoint == 'sm' {
-    @media (min-width: $breakpoint-xs) { @content; }
+    @media (min-width: $breakpoint-xs) {
+      @content;
+    }
   } @else if $breakpoint == 'md' {
-    @media (min-width: $breakpoint-sm) { @content; }
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
   } @else if $breakpoint == 'lg' {
-    @media (min-width: $breakpoint-md) { @content; }
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
   } @else if $breakpoint == 'xl' {
-    @media (min-width: $breakpoint-lg) { @content; }
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
   } @else if $breakpoint == '2xl' {
-    @media (min-width: $breakpoint-xl) { @content; }
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
   }
 }
 
 // 移动端优先
 @mixin mobile-only {
-  @media (max-width: #{$breakpoint-sm - 1}) { @content; }
+  @media (max-width: #{$breakpoint-sm - 1}) {
+    @content;
+  }
 }
 
 @mixin tablet-up {
-  @media (min-width: $breakpoint-sm) { @content; }
+  @media (min-width: $breakpoint-sm) {
+    @content;
+  }
 }
 
 @mixin desktop-up {
-  @media (min-width: $breakpoint-md) { @content; }
+  @media (min-width: $breakpoint-md) {
+    @content;
+  }
 }
 
 // CSS 变量生成
@@ -144,7 +162,7 @@ $breakpoint-xl: 1400px;
 }
 
 // 深色主题
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-bg-primary: #{$color-bg-primary-dark};
   --color-bg-secondary: #{$color-bg-secondary-dark};
   --color-bg-card: #{$color-bg-card-dark};

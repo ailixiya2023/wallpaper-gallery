@@ -1,16 +1,17 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
+import { getThumbnailUrl } from '@/utils/constants'
 import { formatFileSize, formatRelativeTime } from '@/utils/format'
 
 const props = defineProps({
   wallpaper: {
     type: Object,
-    required: true
+    required: true,
   },
   index: {
     type: Number,
-    default: 0
-  }
+    default: 0,
+  },
 })
 
 const emit = defineEmits(['click'])
@@ -18,9 +19,12 @@ const emit = defineEmits(['click'])
 const imageLoaded = ref(false)
 const imageError = ref(false)
 
+// 缩略图 URL（使用代理服务压缩，加速加载）
+const thumbnailUrl = computed(() => getThumbnailUrl(props.wallpaper.url))
+
 // 使用新的数据结构
 const quality = computed(() => props.wallpaper.quality || '高清')
-const resolution = computed(() => props.wallpaper.resolution || { label: '1080P' })
+const resolution = computed(() => props.wallpaper.resolution || { label: '1080P', type: 'primary' })
 const formattedSize = computed(() => formatFileSize(props.wallpaper.size))
 const formattedTime = computed(() => formatRelativeTime(props.wallpaper.createdAt))
 
@@ -34,16 +38,22 @@ const qualityClass = computed(() => {
   }
 })
 
-const handleImageLoad = () => {
+// 分辨率标签样式
+const resolutionClass = computed(() => {
+  const type = resolution.value.type || 'dark'
+  return `tag--${type}`
+})
+
+function handleImageLoad() {
   imageLoaded.value = true
 }
 
-const handleImageError = () => {
+function handleImageError() {
   imageError.value = true
   imageLoaded.value = true
 }
 
-const handleClick = () => {
+function handleClick() {
   emit('click', props.wallpaper)
 }
 
@@ -64,7 +74,7 @@ const animationDelay = computed(() => {
     <div class="card-image">
       <!-- Skeleton 骨架屏 -->
       <div v-if="!imageLoaded" class="image-skeleton">
-        <div class="skeleton-shimmer"></div>
+        <div class="skeleton-shimmer" />
       </div>
 
       <!-- Error State -->
@@ -79,13 +89,13 @@ const animationDelay = computed(() => {
       <!-- Image with fade-in effect -->
       <img
         v-show="imageLoaded && !imageError"
-        :src="wallpaper.url"
+        :src="thumbnailUrl"
         :alt="wallpaper.filename"
         loading="lazy"
         :class="{ 'is-loaded': imageLoaded }"
         @load="handleImageLoad"
         @error="handleImageError"
-      />
+      >
 
       <!-- Overlay on hover -->
       <div class="card-overlay">
@@ -106,7 +116,7 @@ const animationDelay = computed(() => {
         <span class="tag" :class="qualityClass">
           {{ quality }}
         </span>
-        <span class="tag tag--dark">{{ resolution.label }}</span>
+        <span class="tag" :class="resolutionClass">{{ resolution.label }}</span>
       </div>
     </div>
 
@@ -198,12 +208,7 @@ const animationDelay = computed(() => {
   .skeleton-shimmer {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--color-bg-card) 50%,
-      transparent 100%
-    );
+    background: linear-gradient(90deg, transparent 0%, var(--color-bg-card) 50%, transparent 100%);
     animation: shimmer 1.5s infinite;
   }
 }
@@ -305,6 +310,16 @@ const animationDelay = computed(() => {
 
   &--warning {
     background: rgba(245, 158, 11, 0.9);
+    color: white;
+  }
+
+  &--info {
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+  }
+
+  &--danger {
+    background: rgba(239, 68, 68, 0.9);
     color: white;
   }
 

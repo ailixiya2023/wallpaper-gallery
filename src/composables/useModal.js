@@ -2,7 +2,7 @@
 // 弹窗控制 Composable
 // ========================================
 
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
 export function useModal() {
   const isOpen = ref(false)
@@ -27,7 +27,8 @@ export function useModal() {
   const toggle = (data = null) => {
     if (isOpen.value) {
       close()
-    } else {
+    }
+    else {
       open(data)
     }
   }
@@ -39,7 +40,8 @@ export function useModal() {
 
   // 键盘事件处理
   const handleKeydown = (e) => {
-    if (!isOpen.value) return
+    if (!isOpen.value)
+      return
 
     switch (e.key) {
       case 'Escape':
@@ -65,6 +67,6 @@ export function useModal() {
     open,
     close,
     toggle,
-    updateData
+    updateData,
   }
 }

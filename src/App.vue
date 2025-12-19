@@ -1,16 +1,16 @@
 <script setup>
-import { onMounted, computed } from 'vue'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import AppFooter from '@/components/layout/AppFooter.vue'
-import SearchBar from '@/components/common/SearchBar.vue'
+import { computed, onMounted } from 'vue'
 import FilterPanel from '@/components/common/FilterPanel.vue'
+import SearchBar from '@/components/common/SearchBar.vue'
+import AppFooter from '@/components/layout/AppFooter.vue'
+import AppHeader from '@/components/layout/AppHeader.vue'
 import WallpaperGrid from '@/components/wallpaper/WallpaperGrid.vue'
 import WallpaperModal from '@/components/wallpaper/WallpaperModal.vue'
 
-import { useTheme } from '@/composables/useTheme'
-import { useWallpapers } from '@/composables/useWallpapers'
 import { useFilter } from '@/composables/useFilter'
 import { useModal } from '@/composables/useModal'
+import { useTheme } from '@/composables/useTheme'
+import { useWallpapers } from '@/composables/useWallpapers'
 
 // Theme
 const { initTheme } = useTheme()
@@ -28,20 +28,22 @@ const { isOpen, currentData, open, close, updateData } = useModal()
 const currentWallpaper = computed(() => currentData.value)
 
 // Handlers
-const handleSelectWallpaper = (wallpaper) => {
+function handleSelectWallpaper(wallpaper) {
   open(wallpaper)
 }
 
-const handlePrevWallpaper = () => {
-  if (!currentWallpaper.value) return
+function handlePrevWallpaper() {
+  if (!currentWallpaper.value)
+    return
   const prev = getPrevWallpaper(currentWallpaper.value.id)
   if (prev) {
     updateData(prev)
   }
 }
 
-const handleNextWallpaper = () => {
-  if (!currentWallpaper.value) return
+function handleNextWallpaper() {
+  if (!currentWallpaper.value)
+    return
   const next = getNextWallpaper(currentWallpaper.value.id)
   if (next) {
     updateData(next)
@@ -63,8 +65,12 @@ onMounted(() => {
       <div class="container">
         <!-- Hero Section -->
         <section class="hero-section">
-          <h2 class="hero-title">发现精美壁纸</h2>
-          <p class="hero-subtitle">高清 4K 壁纸，免费下载</p>
+          <h2 class="hero-title">
+            发现精美壁纸
+          </h2>
+          <p class="hero-subtitle">
+            高清 4K 壁纸，免费下载
+          </p>
 
           <!-- Search -->
           <div class="hero-search">
@@ -77,10 +83,10 @@ onMounted(() => {
 
         <!-- Filter Panel -->
         <FilterPanel
-          v-model:sortBy="sortBy"
-          v-model:formatFilter="formatFilter"
-          :resultCount="resultCount"
-          :totalCount="total"
+          v-model:sort-by="sortBy"
+          v-model:format-filter="formatFilter"
+          :result-count="resultCount"
+          :total-count="total"
         />
 
         <!-- Error State -->
@@ -111,7 +117,7 @@ onMounted(() => {
     <!-- Modal -->
     <WallpaperModal
       :wallpaper="currentWallpaper"
-      :isOpen="isOpen"
+      :is-open="isOpen"
       @close="close"
       @prev="handlePrevWallpaper"
       @next="handleNextWallpaper"

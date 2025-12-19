@@ -3,9 +3,10 @@
  * 在构建前运行，生成 wallpapers.json
  */
 
-import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import fs from 'node:fs'
+import path from 'node:path'
+import process from 'node:process'
+import { fileURLToPath } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -23,7 +24,7 @@ const CONFIG = {
 
   // 输出路径
   OUTPUT_DIR: path.resolve(__dirname, '../public/data'),
-  OUTPUT_FILE: 'wallpapers.json'
+  OUTPUT_FILE: 'wallpapers.json',
 }
 
 // 使用 raw.githubusercontent.com（更稳定，支持中文文件名）
@@ -41,8 +42,8 @@ async function fetchWallpapersFromGitHub() {
   const response = await fetch(apiUrl, {
     headers: {
       'Accept': 'application/vnd.github.v3+json',
-      'User-Agent': 'Wallpaper-Gallery-Builder'
-    }
+      'User-Agent': 'Wallpaper-Gallery-Builder',
+    },
   })
 
   if (!response.ok) {
@@ -52,8 +53,9 @@ async function fetchWallpapersFromGitHub() {
   const files = await response.json()
 
   // 过滤出图片文件
-  const imageFiles = files.filter(file => {
-    if (file.type !== 'file') return false
+  const imageFiles = files.filter((file) => {
+    if (file.type !== 'file')
+      return false
     const ext = path.extname(file.name).toLowerCase()
     return CONFIG.IMAGE_EXTENSIONS.includes(ext)
   })
@@ -72,14 +74,21 @@ function estimateResolution(size, format) {
   const isPng = format.toUpperCase() === 'PNG'
 
   if (isPng) {
-    if (size >= 8 * 1024 * 1024) return { width: 3840, height: 2160, label: '4K+' }
-    if (size >= 4 * 1024 * 1024) return { width: 2560, height: 1440, label: '2K' }
-    if (size >= 2 * 1024 * 1024) return { width: 1920, height: 1080, label: '1080P' }
+    if (size >= 8 * 1024 * 1024)
+      return { width: 3840, height: 2160, label: '4K+' }
+    if (size >= 4 * 1024 * 1024)
+      return { width: 2560, height: 1440, label: '2K' }
+    if (size >= 2 * 1024 * 1024)
+      return { width: 1920, height: 1080, label: '1080P' }
     return { width: 1280, height: 720, label: '720P' }
-  } else {
-    if (size >= 5 * 1024 * 1024) return { width: 3840, height: 2160, label: '4K+' }
-    if (size >= 2 * 1024 * 1024) return { width: 2560, height: 1440, label: '2K' }
-    if (size >= 800 * 1024) return { width: 1920, height: 1080, label: '1080P' }
+  }
+  else {
+    if (size >= 5 * 1024 * 1024)
+      return { width: 3840, height: 2160, label: '4K+' }
+    if (size >= 2 * 1024 * 1024)
+      return { width: 2560, height: 1440, label: '2K' }
+    if (size >= 800 * 1024)
+      return { width: 1920, height: 1080, label: '1080P' }
     return { width: 1280, height: 720, label: '720P' }
   }
 }
@@ -123,12 +132,12 @@ function generateWallpaperData(files) {
       resolution: {
         width: resolution.width,
         height: resolution.height,
-        label: resolution.label
+        label: resolution.label,
       },
       quality: qualityLabel,
       tags: [qualityLabel, ext, resolution.label],
       createdAt: uploadDate.toISOString(),
-      sha: file.sha
+      sha: file.sha,
     }
   })
 }
@@ -168,7 +177,7 @@ async function main() {
       total: wallpapers.length,
       source: `https://github.com/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}`,
       baseUrl: RAW_BASE_URL,
-      wallpapers
+      wallpapers,
     }
 
     fs.writeFileSync(outputPath, JSON.stringify(outputData, null, 2))
@@ -186,14 +195,14 @@ async function main() {
     const stats = {
       jpg: wallpapers.filter(w => w.format === 'JPG' || w.format === 'JPEG').length,
       png: wallpapers.filter(w => w.format === 'PNG').length,
-      hd: wallpapers.filter(w => w.quality === '超清' || w.quality === '4K').length
+      hd: wallpapers.filter(w => w.quality === '超清' || w.quality === '4K').length,
     }
     console.log('Statistics:')
     console.log(`  JPG: ${stats.jpg}`)
     console.log(`  PNG: ${stats.png}`)
     console.log(`  HD (4K+): ${stats.hd}`)
-
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Error generating wallpaper data:', error)
     process.exit(1)
   }

@@ -1,17 +1,17 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { formatFileSize, formatDate, formatRelativeTime, getSizeLabel, getFileExtension, downloadFile } from '@/utils/format'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import { downloadFile, formatDate, formatFileSize, formatRelativeTime, getFileExtension, getResolutionLabel } from '@/utils/format'
 
 const props = defineProps({
   wallpaper: {
     type: Object,
-    default: null
+    default: null,
   },
   isOpen: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 })
 
 const emit = defineEmits(['close', 'prev', 'next'])
@@ -30,18 +30,22 @@ watch(() => props.wallpaper, () => {
 
 // 质量标签（基于真实分辨率动态计算）
 const quality = computed(() => {
-  // 如果有真实尺寸，基于真实分辨率计算质量
   if (actualDimensions.value.width > 0) {
-    const w = actualDimensions.value.width
-    const h = actualDimensions.value.height
-    if (w >= 3840 || h >= 2160) return '超清'
-    if (w >= 2560 || h >= 1440) return '4K'
-    if (w >= 1920 || h >= 1080) return '高清'
-    return '标清'
+    const res = getResolutionLabel(actualDimensions.value.width, actualDimensions.value.height)
+    // 映射标签到质量
+    const qualityMap = {
+      '5K+': '超清',
+      '4K+': '超清',
+      '4K': '4K',
+      '超清': '高清',
+      '高清': '高清',
+      '标清': '标清',
+    }
+    return qualityMap[res.label] || '高清'
   }
-  // 未加载时使用 JSON 中的值
-  return props.wallpaper?.quality || getSizeLabel(props.wallpaper?.size)?.label || '高清'
+  return props.wallpaper?.quality || '高清'
 })
+
 const qualityType = computed(() => {
   switch (quality.value) {
     case '超清': return 'warning'
@@ -53,17 +57,9 @@ const qualityType = computed(() => {
 
 // 分辨率信息 - 优先使用图片加载后的真实尺寸
 const resolution = computed(() => {
-  // 优先使用图片加载后获取的真实尺寸
   if (actualDimensions.value.width > 0) {
-    const w = actualDimensions.value.width
-    const h = actualDimensions.value.height
-    let label = '720P'
-    if (w >= 3840 || h >= 2160) label = '4K+'
-    else if (w >= 2560 || h >= 1440) label = '2K'
-    else if (w >= 1920 || h >= 1080) label = '1080P'
-    return { width: w, height: h, label }
+    return getResolutionLabel(actualDimensions.value.width, actualDimensions.value.height)
   }
-  // 图片未加载时，使用 JSON 中的估算值
   if (props.wallpaper?.resolution) {
     return props.wallpaper.resolution
   }
@@ -76,54 +72,57 @@ const formattedDate = computed(() => props.wallpaper ? formatDate(props.wallpape
 const relativeTime = computed(() => props.wallpaper ? formatRelativeTime(props.wallpaper.createdAt) : '')
 
 // Handlers
-const handleImageLoad = (e) => {
+function handleImageLoad(e) {
   imageLoaded.value = true
   // 获取图片实际尺寸
   if (e.target) {
     actualDimensions.value = {
       width: e.target.naturalWidth,
-      height: e.target.naturalHeight
+      height: e.target.naturalHeight,
     }
   }
 }
 
-const handleImageError = () => {
+function handleImageError() {
   imageError.value = true
   imageLoaded.value = true
 }
 
-const handleClose = () => {
+function handleClose() {
   emit('close')
 }
 
-const handlePrev = () => {
+function handlePrev() {
   emit('prev')
 }
 
-const handleNext = () => {
+function handleNext() {
   emit('next')
 }
 
-const handleDownload = async () => {
-  if (!props.wallpaper || downloading.value) return
+async function handleDownload() {
+  if (!props.wallpaper || downloading.value)
+    return
 
   downloading.value = true
   try {
     await downloadFile(props.wallpaper.url, props.wallpaper.filename)
-  } finally {
+  }
+  finally {
     downloading.value = false
   }
 }
 
-const handleOverlayClick = (e) => {
+function handleOverlayClick(e) {
   if (e.target === e.currentTarget) {
     handleClose()
   }
 }
 
 // Keyboard navigation
-const handleKeydown = (e) => {
-  if (!props.isOpen) return
+function handleKeydown(e) {
+  if (!props.isOpen)
+    return
 
   switch (e.key) {
     case 'Escape':
@@ -153,20 +152,20 @@ onUnmounted(() => {
       <div v-if="isOpen && wallpaper" class="modal-overlay" @click="handleOverlayClick">
         <div class="modal-content">
           <!-- Close Button -->
-          <button class="modal-close" @click="handleClose" aria-label="关闭">
+          <button class="modal-close" aria-label="关闭" @click="handleClose">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
 
           <!-- Navigation Buttons -->
-          <button class="modal-nav modal-nav--prev" @click="handlePrev" aria-label="上一张">
+          <button class="modal-nav modal-nav--prev" aria-label="上一张" @click="handlePrev">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
 
-          <button class="modal-nav modal-nav--next" @click="handleNext" aria-label="下一张">
+          <button class="modal-nav modal-nav--next" aria-label="下一张" @click="handleNext">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 18l6-6-6-6" />
             </svg>
@@ -196,18 +195,20 @@ onUnmounted(() => {
               class="modal-image"
               @load="handleImageLoad"
               @error="handleImageError"
-            />
+            >
           </div>
 
           <!-- Info Panel -->
           <div class="modal-info">
             <div class="info-header">
-              <h3 class="info-title">{{ wallpaper.filename }}</h3>
+              <h3 class="info-title">
+                {{ wallpaper.filename }}
+              </h3>
               <div class="info-tags">
                 <span class="tag" :class="[`tag--${qualityType}`]">
                   {{ quality }}
                 </span>
-                <span class="tag tag--dark">{{ resolution.label }}</span>
+                <span class="tag" :class="[`tag--${resolution.type || 'dark'}`]">{{ resolution.label }}</span>
                 <span class="tag tag--secondary">{{ fileExt }}</span>
               </div>
             </div>
@@ -486,6 +487,16 @@ onUnmounted(() => {
     color: var(--color-warning);
   }
 
+  &--info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+  }
+
+  &--danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+
   &--secondary {
     background: var(--color-bg-hover);
     color: var(--color-text-secondary);
@@ -495,7 +506,7 @@ onUnmounted(() => {
     background: rgba(0, 0, 0, 0.6);
     color: white;
 
-    [data-theme="dark"] & {
+    [data-theme='dark'] & {
       background: rgba(255, 255, 255, 0.15);
     }
   }

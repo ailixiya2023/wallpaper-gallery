@@ -3,14 +3,14 @@ defineProps({
   size: {
     type: String,
     default: 'md',
-    validator: (v) => ['sm', 'md', 'lg'].includes(v)
-  }
+    validator: v => ['sm', 'md', 'lg'].includes(v),
+  },
 })
 </script>
 
 <template>
   <div class="loading-spinner" :class="[`size-${size}`]">
-    <div class="spinner"></div>
+    <div class="spinner" />
   </div>
 </template>
 

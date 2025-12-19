@@ -2,10 +2,15 @@
 // 主题切换 Composable
 // ========================================
 
-import { ref, watch, onMounted } from 'vue'
-import { THEMES, STORAGE_KEYS } from '@/utils/constants'
+import { onMounted, ref, watch } from 'vue'
+import { STORAGE_KEYS, THEMES } from '@/utils/constants'
 
 const theme = ref(THEMES.LIGHT)
+
+// 应用主题到 DOM
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', theme.value)
+}
 
 export function useTheme() {
   // 初始化主题
@@ -14,17 +19,13 @@ export function useTheme() {
     const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME)
     if (savedTheme && Object.values(THEMES).includes(savedTheme)) {
       theme.value = savedTheme
-    } else {
+    }
+    else {
       // 检测系统偏好
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
       theme.value = prefersDark ? THEMES.DARK : THEMES.LIGHT
     }
     applyTheme()
-  }
-
-  // 应用主题到 DOM
-  const applyTheme = () => {
-    document.documentElement.setAttribute('data-theme', theme.value)
   }
 
   // 切换主题
@@ -67,6 +68,6 @@ export function useTheme() {
     isDark,
     toggleTheme,
     setTheme,
-    initTheme
+    initTheme,
   }
 }

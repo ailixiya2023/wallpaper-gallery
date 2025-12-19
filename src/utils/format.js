@@ -2,19 +2,43 @@
 // 格式化工具函数
 // ========================================
 
+import { RESOLUTION_THRESHOLDS } from '@/utils/constants'
+
+/**
+ * 根据真实分辨率获取标签
+ * @param {number} width - 图片宽度
+ * @param {number} height - 图片高度
+ * @returns {object} { width, height, label, type }
+ */
+export function getResolutionLabel(width, height) {
+  const maxSide = Math.max(width, height) // 取长边判断
+  for (const threshold of RESOLUTION_THRESHOLDS) {
+    if (maxSide >= threshold.minWidth) {
+      return {
+        width,
+        height,
+        label: threshold.label,
+        type: threshold.type,
+      }
+    }
+  }
+  return { width, height, label: '标清', type: 'secondary' }
+}
+
 /**
  * 格式化文件大小
  * @param {number} bytes - 字节数
  * @returns {string} 格式化后的大小字符串
  */
 export function formatFileSize(bytes) {
-  if (bytes === 0) return '0 B'
+  if (bytes === 0)
+    return '0 B'
 
   const units = ['B', 'KB', 'MB', 'GB']
   const k = 1024
   const i = Math.floor(Math.log(bytes) / Math.log(k))
 
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + units[i]
+  return `${Number.parseFloat((bytes / k ** i).toFixed(2))} ${units[i]}`
 }
 
 /**
@@ -47,11 +71,16 @@ export function formatRelativeTime(date) {
   const months = Math.floor(days / 30)
   const years = Math.floor(days / 365)
 
-  if (years > 0) return `${years} 年前`
-  if (months > 0) return `${months} 个月前`
-  if (days > 0) return `${days} 天前`
-  if (hours > 0) return `${hours} 小时前`
-  if (minutes > 0) return `${minutes} 分钟前`
+  if (years > 0)
+    return `${years} 年前`
+  if (months > 0)
+    return `${months} 个月前`
+  if (days > 0)
+    return `${days} 天前`
+  if (hours > 0)
+    return `${hours} 小时前`
+  if (minutes > 0)
+    return `${minutes} 分钟前`
   return '刚刚'
 }
 
@@ -91,7 +120,8 @@ export function getSizeLabel(size) {
 export function debounce(fn, delay = 300) {
   let timer = null
   return function (...args) {
-    if (timer) clearTimeout(timer)
+    if (timer)
+      clearTimeout(timer)
     timer = setTimeout(() => {
       fn.apply(this, args)
     }, delay)
@@ -135,7 +165,8 @@ export async function downloadFile(url, filename) {
     link.click()
     document.body.removeChild(link)
     URL.revokeObjectURL(blobUrl)
-  } catch (error) {
+  }
+  catch {
     // 降级方案：直接打开链接
     window.open(url, '_blank')
   }

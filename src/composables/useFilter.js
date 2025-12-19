@@ -2,9 +2,9 @@
 // 搜索和筛选 Composable
 // ========================================
 
-import { ref, computed, watch } from 'vue'
-import { debounce } from '@/utils/format'
+import { computed, ref, watch } from 'vue'
 import { STORAGE_KEYS } from '@/utils/constants'
+import { debounce } from '@/utils/format'
 
 export function useFilter(wallpapers) {
   // 搜索关键词
@@ -38,16 +38,16 @@ export function useFilter(wallpapers) {
     // 搜索过滤
     if (debouncedQuery.value) {
       const query = debouncedQuery.value.toLowerCase()
-      result = result.filter((w) =>
-        w.filename.toLowerCase().includes(query) ||
-        (w.tags && w.tags.some((tag) => tag.toLowerCase().includes(query)))
+      result = result.filter(w =>
+        w.filename.toLowerCase().includes(query)
+        || (w.tags && w.tags.some(tag => tag.toLowerCase().includes(query))),
       )
     }
 
     // 格式过滤
     if (formatFilter.value !== 'all') {
-      result = result.filter((w) =>
-        w.format.toLowerCase() === formatFilter.value.toLowerCase()
+      result = result.filter(w =>
+        w.format.toLowerCase() === formatFilter.value.toLowerCase(),
       )
     }
 
@@ -99,6 +99,6 @@ export function useFilter(wallpapers) {
     filteredWallpapers,
     resultCount,
     hasActiveFilters,
-    resetFilters
+    resetFilters,
   }
 }

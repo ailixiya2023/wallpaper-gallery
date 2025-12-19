@@ -1,32 +1,32 @@
 <script setup>
-import { SORT_OPTIONS, FORMAT_OPTIONS } from '@/utils/constants'
+import { FORMAT_OPTIONS, SORT_OPTIONS } from '@/utils/constants'
 
-const props = defineProps({
+defineProps({
   sortBy: {
     type: String,
-    default: 'newest'
+    default: 'newest',
   },
   formatFilter: {
     type: String,
-    default: 'all'
+    default: 'all',
   },
   resultCount: {
     type: Number,
-    default: 0
+    default: 0,
   },
   totalCount: {
     type: Number,
-    default: 0
-  }
+    default: 0,
+  },
 })
 
 const emit = defineEmits(['update:sortBy', 'update:formatFilter'])
 
-const handleSortChange = (e) => {
+function handleSortChange(e) {
   emit('update:sortBy', e.target.value)
 }
 
-const handleFormatChange = (e) => {
+function handleFormatChange(e) {
   emit('update:formatFilter', e.target.value)
 }
 </script>
