@@ -1,0 +1,168 @@
+// ========================================
+// 主题变量定义 (Sass)
+// ========================================
+
+// 颜色 - 浅色主题
+$color-bg-primary-light: #f8f9fa;
+$color-bg-secondary-light: #ffffff;
+$color-bg-card-light: #ffffff;
+$color-bg-hover-light: #f1f3f4;
+$color-text-primary-light: #1a1a2e;
+$color-text-secondary-light: #6c757d;
+$color-text-muted-light: #adb5bd;
+$color-border-light: #e9ecef;
+$color-accent-light: #6366f1;
+
+// 颜色 - 深色主题
+$color-bg-primary-dark: #0f0f1a;
+$color-bg-secondary-dark: #1a1a2e;
+$color-bg-card-dark: #1e1e32;
+$color-bg-hover-dark: #2a2a42;
+$color-text-primary-dark: #f8f9fa;
+$color-text-secondary-dark: #a0a0b0;
+$color-text-muted-dark: #6c6c7c;
+$color-border-dark: #2a2a42;
+$color-accent-dark: #818cf8;
+
+// 圆角
+$radius-sm: 6px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 24px;
+$radius-full: 9999px;
+
+// 间距
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+$spacing-2xl: 48px;
+
+// 字体
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+$font-size-xs: 12px;
+$font-size-sm: 14px;
+$font-size-md: 16px;
+$font-size-lg: 18px;
+$font-size-xl: 24px;
+$font-size-2xl: 32px;
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// 动画时间
+$transition-fast: 150ms ease;
+$transition-normal: 250ms ease;
+$transition-slow: 350ms ease;
+$transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+// 布局
+$header-height: 72px;
+$container-max-width: 1440px;
+$grid-gap: 24px;
+
+// 响应式断点
+$breakpoint-xs: 576px;
+$breakpoint-sm: 768px;
+$breakpoint-md: 992px;
+$breakpoint-lg: 1200px;
+$breakpoint-xl: 1400px;
+
+// 响应式 mixin
+@mixin respond-to($breakpoint) {
+  @if $breakpoint == 'xs' {
+    @media (max-width: #{$breakpoint-xs - 1}) { @content; }
+  } @else if $breakpoint == 'sm' {
+    @media (min-width: $breakpoint-xs) { @content; }
+  } @else if $breakpoint == 'md' {
+    @media (min-width: $breakpoint-sm) { @content; }
+  } @else if $breakpoint == 'lg' {
+    @media (min-width: $breakpoint-md) { @content; }
+  } @else if $breakpoint == 'xl' {
+    @media (min-width: $breakpoint-lg) { @content; }
+  } @else if $breakpoint == '2xl' {
+    @media (min-width: $breakpoint-xl) { @content; }
+  }
+}
+
+// 移动端优先
+@mixin mobile-only {
+  @media (max-width: #{$breakpoint-sm - 1}) { @content; }
+}
+
+@mixin tablet-up {
+  @media (min-width: $breakpoint-sm) { @content; }
+}
+
+@mixin desktop-up {
+  @media (min-width: $breakpoint-md) { @content; }
+}
+
+// CSS 变量生成
+:root {
+  // 颜色
+  --color-bg-primary: #{$color-bg-primary-light};
+  --color-bg-secondary: #{$color-bg-secondary-light};
+  --color-bg-card: #{$color-bg-card-light};
+  --color-bg-hover: #{$color-bg-hover-light};
+  --color-bg-modal: rgba(0, 0, 0, 0.5);
+  --color-text-primary: #{$color-text-primary-light};
+  --color-text-secondary: #{$color-text-secondary-light};
+  --color-text-muted: #{$color-text-muted-light};
+  --color-border: #{$color-border-light};
+  --color-border-light: #f1f3f4;
+  --color-accent: #{$color-accent-light};
+  --color-accent-hover: #4f46e5;
+  --color-accent-light: rgba(99, 102, 241, 0.1);
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+
+  // 阴影
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.16);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.12), 0 16px 48px rgba(0, 0, 0, 0.08);
+
+  // 尺寸
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+  --radius-xl: #{$radius-xl};
+  --radius-full: #{$radius-full};
+  --header-height: #{$header-height};
+  --grid-gap: #{$grid-gap};
+
+  // 动画
+  --transition-fast: #{$transition-fast};
+  --transition-normal: #{$transition-normal};
+  --transition-slow: #{$transition-slow};
+}
+
+// 深色主题
+[data-theme="dark"] {
+  --color-bg-primary: #{$color-bg-primary-dark};
+  --color-bg-secondary: #{$color-bg-secondary-dark};
+  --color-bg-card: #{$color-bg-card-dark};
+  --color-bg-hover: #{$color-bg-hover-dark};
+  --color-bg-modal: rgba(0, 0, 0, 0.75);
+  --color-text-primary: #{$color-text-primary-dark};
+  --color-text-secondary: #{$color-text-secondary-dark};
+  --color-text-muted: #{$color-text-muted-dark};
+  --color-border: #{$color-border-dark};
+  --color-border-light: #3a3a52;
+  --color-accent: #{$color-accent-dark};
+  --color-accent-hover: #a5b4fc;
+  --color-accent-light: rgba(129, 140, 248, 0.15);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.35), 0 16px 48px rgba(0, 0, 0, 0.3);
+}

@@ -1,0 +1,20 @@
+{
+  "name": "wallpaper-gallery",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/generate-data.js && vite build",
+    "preview": "vite preview",
+    "generate": "node scripts/generate-data.js"
+  },
+  "dependencies": {
+    "vue": "^3.5.24"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "sass": "^1.97.0",
+    "vite": "^7.2.4"
+  }
+}
