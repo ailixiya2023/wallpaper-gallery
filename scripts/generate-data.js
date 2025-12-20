@@ -20,6 +20,9 @@ const CONFIG = {
   WALLPAPER_DIR: 'wallpaper',
   THUMBNAIL_DIR: 'thumbnail',
 
+  // 本地图床仓库路径（用于本地模式）
+  LOCAL_REPO_PATH: path.resolve(__dirname, '../../nuanXinProPic'),
+
   // 支持的图片格式
   IMAGE_EXTENSIONS: ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
 
@@ -31,6 +34,40 @@ const CONFIG = {
 // 使用 raw.githubusercontent.com（更稳定，支持中文文件名）
 const RAW_BASE_URL = `https://raw.githubusercontent.com/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/${CONFIG.GITHUB_BRANCH}/${CONFIG.WALLPAPER_DIR}`
 const THUMBNAIL_BASE_URL = `https://raw.githubusercontent.com/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/${CONFIG.GITHUB_BRANCH}/${CONFIG.THUMBNAIL_DIR}`
+
+/**
+ * 通过本地目录获取壁纸列表（优先使用，避免 API 限流）
+ */
+function fetchWallpapersFromLocal() {
+  const localWallpaperDir = path.join(CONFIG.LOCAL_REPO_PATH, CONFIG.WALLPAPER_DIR)
+
+  if (!fs.existsSync(localWallpaperDir)) {
+    console.log(`Local directory not found: ${localWallpaperDir}`)
+    return null
+  }
+
+  console.log('Fetching wallpapers from local directory...')
+  console.log(`Path: ${localWallpaperDir}`)
+
+  const files = fs.readdirSync(localWallpaperDir)
+    .filter((filename) => {
+      const ext = path.extname(filename).toLowerCase()
+      return CONFIG.IMAGE_EXTENSIONS.includes(ext)
+    })
+    .map((filename) => {
+      const filePath = path.join(localWallpaperDir, filename)
+      const stats = fs.statSync(filePath)
+      return {
+        name: filename,
+        size: stats.size,
+        sha: '', // 本地模式无 SHA
+        type: 'file',
+      }
+    })
+
+  console.log(`Found ${files.length} image files`)
+  return files
+}
 
 /**
  * 通过 GitHub API 获取壁纸列表
@@ -160,8 +197,14 @@ async function main() {
   console.log('='.repeat(50))
 
   try {
-    // 获取壁纸文件列表
-    const files = await fetchWallpapersFromGitHub()
+    // 优先从本地目录获取（避免 GitHub API 限流）
+    let files = fetchWallpapersFromLocal()
+
+    // 如果本地目录不存在，则从 GitHub API 获取
+    if (!files) {
+      console.log('Falling back to GitHub API...')
+      files = await fetchWallpapersFromGitHub()
+    }
 
     if (files.length === 0) {
       console.warn('No image files found!')
