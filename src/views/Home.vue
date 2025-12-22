@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import BackToTop from '@/components/common/BackToTop.vue'
 import FilterPanel from '@/components/common/FilterPanel.vue'
 import TodayPick from '@/components/home/TodayPick.vue'
@@ -10,6 +11,12 @@ import { useFilter } from '@/composables/useFilter'
 import { useModal } from '@/composables/useModal'
 import { useSearch } from '@/composables/useSearch'
 import { useWallpapers } from '@/composables/useWallpapers'
+import { useWallpaperType } from '@/composables/useWallpaperType'
+
+const route = useRoute()
+
+// 系列管理
+const { currentSeries, initFromRoute } = useWallpaperType()
 
 // Wallpapers
 const { wallpapers, loading, error, total, fetchWallpapers, getPrevWallpaper, getNextWallpaper } = useWallpapers()
@@ -22,8 +29,20 @@ watch(wallpapers, (newWallpapers) => {
   setWallpapers(newWallpapers)
 }, { immediate: true })
 
+// 监听路由变化，切换系列
+watch(() => route.meta?.series, (newSeries) => {
+  if (newSeries) {
+    initFromRoute(newSeries)
+  }
+}, { immediate: false })
+
+// 监听系列变化，重新加载数据
+watch(currentSeries, async (newSeries) => {
+  await fetchWallpapers(newSeries)
+}, { immediate: false })
+
 // Filter
-const { sortBy, formatFilter, categoryFilter, filteredWallpapers, resultCount } = useFilter(wallpapers, searchQuery)
+const { sortBy, formatFilter, categoryFilter, categoryOptions, filteredWallpapers, resultCount, hasActiveFilters, resetFilters } = useFilter(wallpapers, searchQuery)
 
 // Modal
 const { isOpen, currentData, open, close, updateData } = useModal()
@@ -56,12 +75,22 @@ function handleNextWallpaper() {
 
 // 重置所有筛选条件
 function handleReset() {
-  searchQuery.value = ''
+  resetFilters()
+}
+
+// 重新加载当前系列
+function handleReload() {
+  fetchWallpapers(currentSeries.value, true)
 }
 
 // Initialize
 onMounted(() => {
-  fetchWallpapers()
+  // 如果路由带有系列参数，初始化系列
+  if (route.meta?.series) {
+    initFromRoute(route.meta.series)
+  }
+  // 加载当前系列的壁纸数据
+  fetchWallpapers(currentSeries.value)
 })
 </script>
 
@@ -80,6 +109,7 @@ onMounted(() => {
         v-model:sort-by="sortBy"
         v-model:format-filter="formatFilter"
         v-model:category-filter="categoryFilter"
+        :category-options="categoryOptions"
         :result-count="resultCount"
         :total-count="total"
         @reset="handleReset"
@@ -93,7 +123,7 @@ onMounted(() => {
         </svg>
         <h3>加载失败</h3>
         <p>{{ error }}</p>
-        <button class="btn btn--primary" @click="fetchWallpapers">
+        <button class="btn btn--primary" @click="handleReload">
           重新加载
         </button>
       </div>
@@ -104,7 +134,10 @@ onMounted(() => {
         :wallpapers="filteredWallpapers"
         :loading="loading"
         :search-query="searchQuery"
+        :total-count="total"
+        :has-filters="hasActiveFilters"
         @select="handleSelectWallpaper"
+        @reset-filters="resetFilters"
       />
     </div>
 

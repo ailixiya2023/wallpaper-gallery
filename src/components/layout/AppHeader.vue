@@ -1,18 +1,44 @@
 <script setup>
 import { gsap } from 'gsap'
-import { nextTick, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, nextTick, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import SearchBar from '@/components/common/SearchBar.vue'
 import { useDevice } from '@/composables/useDevice'
 import { useFullscreen } from '@/composables/useFullscreen'
 import { useSearch } from '@/composables/useSearch'
 import { useTheme } from '@/composables/useTheme'
+import { useWallpaperType } from '@/composables/useWallpaperType'
 
+const route = useRoute()
 const router = useRouter()
 const { theme, toggleTheme } = useTheme()
 const { isFullscreen, toggleFullscreen } = useFullscreen()
 const { isMobile } = useDevice()
 const { searchQuery, wallpapers } = useSearch()
+const { availableSeriesOptions, currentSeries } = useWallpaperType()
+
+// 判断系列是否为当前激活状态（结合路由和当前系列）
+const isSeriesActive = computed(() => (seriesId) => {
+  const currentPath = route.path
+  // 首页 '/' 根据当前系列判断
+  if (currentPath === '/') {
+    return currentSeries.value === seriesId
+  }
+  // 其他路由根据路径判断
+  if (seriesId === 'desktop') {
+    return currentPath === '/desktop'
+  }
+  return currentPath === `/${seriesId}`
+})
+
+// 获取系列对应的路由路径
+function getSeriesPath(seriesId) {
+  // desktop 系列可以用首页路由
+  if (seriesId === 'desktop') {
+    return '/desktop'
+  }
+  return `/${seriesId}`
+}
 
 // 移动端抽屉状态
 const showDrawer = ref(false)
@@ -127,6 +153,35 @@ function closeSearch() {
           <span class="brand-subtitle">精选高清壁纸</span>
         </div>
       </div>
+
+      <!-- PC 端系列导航 -->
+      <nav v-if="!isMobile" class="header-nav">
+        <router-link
+          v-for="option in availableSeriesOptions"
+          :key="option.id"
+          :to="getSeriesPath(option.id)"
+          class="nav-link"
+          :class="{ 'is-active': isSeriesActive(option.id) }"
+        >
+          <!-- 电脑壁纸图标 -->
+          <svg v-if="option.id === 'desktop'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          <!-- 手机壁纸图标 -->
+          <svg v-else-if="option.id === 'mobile'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+            <line x1="12" y1="18" x2="12.01" y2="18" />
+          </svg>
+          <!-- 头像图标 -->
+          <svg v-else-if="option.id === 'avatar'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+          <span>{{ option.name }}</span>
+        </router-link>
+      </nav>
 
       <!-- PC 端操作栏 -->
       <div v-if="!isMobile" class="header-actions">
@@ -315,6 +370,40 @@ function closeSearch() {
             </button>
           </nav>
 
+          <!-- 系列切换 -->
+          <div class="drawer-section series-section">
+            <h3 class="section-title">
+              壁纸分类
+            </h3>
+            <div class="series-grid">
+              <button
+                v-for="option in availableSeriesOptions"
+                :key="option.id"
+                class="series-item"
+                :class="{ 'is-active': isSeriesActive(option.id) }"
+                @click="navigateTo(getSeriesPath(option.id))"
+              >
+                <!-- 电脑壁纸图标 -->
+                <svg v-if="option.id === 'desktop'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                  <line x1="8" y1="21" x2="16" y2="21" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+                <!-- 手机壁纸图标 -->
+                <svg v-else-if="option.id === 'mobile'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
+                  <line x1="12" y1="18" x2="12.01" y2="18" />
+                </svg>
+                <!-- 头像图标 -->
+                <svg v-else-if="option.id === 'avatar'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>{{ option.name }}</span>
+              </button>
+            </div>
+          </div>
+
           <!-- 外部链接 -->
           <div class="drawer-section">
             <a
@@ -405,6 +494,44 @@ function closeSearch() {
 
   @include mobile-only {
     display: none;
+  }
+}
+
+// PC 端系列导航
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-left: $spacing-xl;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: $radius-md;
+  transition: all var(--transition-fast);
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+  }
+
+  &.is-active,
+  &.router-link-active {
+    color: var(--color-accent);
+    background: var(--color-accent-light);
+    font-weight: $font-weight-semibold;
   }
 }
 
@@ -624,6 +751,59 @@ function closeSearch() {
 .drawer-section {
   padding: 16px;
   border-bottom: 1px solid var(--color-border);
+}
+
+// 移动端系列切换
+.series-section {
+  .section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+}
+
+.series-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.series-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: var(--color-bg-hover);
+  border-radius: 12px;
+  color: var(--color-text-secondary);
+  transition: all 0.2s ease;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  &.is-active {
+    background: var(--color-accent-light);
+    color: var(--color-accent);
+
+    svg {
+      color: var(--color-accent);
+    }
+  }
 }
 
 // 移动端搜索弹窗

@@ -25,6 +25,34 @@ const imageError = ref(false)
 const downloading = ref(false)
 const actualDimensions = ref({ width: 0, height: 0 })
 
+// 渐进式加载状态
+const previewLoaded = ref(false)
+const originalLoaded = ref(false)
+const showOriginal = ref(false)
+const loadingOriginal = ref(false)
+
+// 是否有预览图（仅 desktop 系列）
+const hasPreview = computed(() => !!props.wallpaper?.previewUrl)
+
+// 当前显示的图片 URL
+const displayUrl = computed(() => {
+  if (!props.wallpaper)
+    return ''
+
+  // 如果没有预览图，直接返回原图
+  if (!hasPreview.value) {
+    return props.wallpaper.url
+  }
+
+  // 如果用户选择查看原图，返回原图 URL
+  if (showOriginal.value) {
+    return props.wallpaper.url
+  }
+
+  // 默认返回预览图 URL
+  return props.wallpaper.previewUrl
+})
+
 // GSAP 入场动画
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
@@ -108,6 +136,11 @@ watch(() => props.wallpaper, () => {
   imageLoaded.value = false
   imageError.value = false
   actualDimensions.value = { width: 0, height: 0 }
+  // 重置渐进式加载状态
+  previewLoaded.value = false
+  originalLoaded.value = false
+  showOriginal.value = false
+  loadingOriginal.value = false
 })
 
 // 分辨率信息 - 优先使用图片加载后的真实尺寸
@@ -130,6 +163,22 @@ const displayFilename = computed(() => props.wallpaper ? getDisplayFilename(prop
 // Handlers
 function handleImageLoad(e) {
   imageLoaded.value = true
+
+  // 根据是否有预览图更新不同的状态
+  if (hasPreview.value) {
+    if (showOriginal.value) {
+      originalLoaded.value = true
+      loadingOriginal.value = false
+    }
+    else {
+      previewLoaded.value = true
+    }
+  }
+  else {
+    // 没有预览图，直接标记原图加载完成
+    originalLoaded.value = true
+  }
+
   // 获取图片实际尺寸
   if (e.target) {
     actualDimensions.value = {
@@ -142,6 +191,17 @@ function handleImageLoad(e) {
 function handleImageError() {
   imageError.value = true
   imageLoaded.value = true
+  loadingOriginal.value = false
+}
+
+// 切换到原图
+function handleViewOriginal() {
+  if (!hasPreview.value || showOriginal.value || loadingOriginal.value)
+    return
+
+  loadingOriginal.value = true
+  showOriginal.value = true
+  imageLoaded.value = false
 }
 
 function handleClose() {
@@ -229,6 +289,9 @@ onUnmounted(() => {
           <!-- Loading -->
           <div v-if="!imageLoaded" class="modal-loading">
             <LoadingSpinner size="lg" />
+            <p v-if="loadingOriginal" class="loading-text">
+              正在加载原图...
+            </p>
           </div>
 
           <!-- Error -->
@@ -243,12 +306,29 @@ onUnmounted(() => {
           <!-- Image -->
           <img
             v-show="imageLoaded && !imageError"
-            :src="wallpaper.url"
+            :src="displayUrl"
             :alt="wallpaper.filename"
             class="modal-image"
             @load="handleImageLoad"
             @error="handleImageError"
           >
+
+          <!-- 预览图标识 -->
+          <div v-if="hasPreview && imageLoaded && !imageError && !showOriginal" class="preview-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span>预览图</span>
+          </div>
+
+          <!-- 原图标识 -->
+          <div v-if="hasPreview && imageLoaded && !imageError && showOriginal" class="original-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 3l14 9-14 9V3z" />
+            </svg>
+            <span>原图</span>
+          </div>
         </div>
 
         <!-- Info Panel -->
@@ -310,6 +390,29 @@ onUnmounted(() => {
                 <span>{{ formattedDate }}</span>
                 <span class="detail-sub">({{ relativeTime }})</span>
               </div>
+            </div>
+
+            <!-- 查看原图按钮（仅在有预览图且未加载原图时显示） -->
+            <button
+              v-if="hasPreview && !showOriginal"
+              class="view-original-btn"
+              :disabled="loadingOriginal"
+              @click="handleViewOriginal"
+            >
+              <LoadingSpinner v-if="loadingOriginal" size="sm" />
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+              </svg>
+              <span>{{ loadingOriginal ? '加载中...' : '查看原图' }}</span>
+            </button>
+
+            <!-- 原图已加载标识 -->
+            <div v-if="hasPreview && showOriginal && originalLoaded" class="original-loaded-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+              <span>已加载原图</span>
             </div>
 
             <button
@@ -478,6 +581,22 @@ onUnmounted(() => {
   }
 }
 
+.loading-text {
+  font-size: $font-size-sm;
+  color: var(--color-text-secondary);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 .modal-image {
   max-width: 100%;
   max-height: 75vh;
@@ -499,6 +618,36 @@ onUnmounted(() => {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+// 预览图/原图标识
+.preview-badge,
+.original-badge {
+  position: absolute;
+  bottom: $spacing-md;
+  left: $spacing-md;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: 6px $spacing-sm;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.preview-badge {
+  background: rgba(59, 130, 246, 0.9);
+  color: white;
+}
+
+.original-badge {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
 }
 
 .modal-info {
@@ -619,6 +768,58 @@ onUnmounted(() => {
   font-size: $font-size-xs;
   color: var(--color-text-muted);
   margin-left: 2px;
+}
+
+// 查看原图按钮
+.view-original-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  width: 100%;
+  padding: $spacing-md;
+  background: transparent;
+  border: 2px solid var(--color-accent);
+  color: var(--color-accent);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    background: var(--color-accent);
+    color: white;
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// 原图已加载标识
+.original-loaded-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border-radius: var(--radius-md);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .download-btn {

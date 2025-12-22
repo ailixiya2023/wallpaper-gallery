@@ -3,12 +3,18 @@
 // ========================================
 
 import { computed, ref } from 'vue'
-import { WALLPAPERS_DATA_URL } from '@/utils/constants'
+import { SERIES_CONFIG } from '@/utils/constants'
 
+// 每个系列的数据缓存
+const seriesCache = ref({})
+
+// 当前加载的系列
+const currentLoadedSeries = ref('')
+
+// 当前系列的壁纸数据
 const wallpapers = ref([])
 const loading = ref(false)
 const error = ref(null)
-const loaded = ref(false)
 
 // 格式化字节数
 function formatBytes(bytes) {
@@ -21,31 +27,82 @@ function formatBytes(bytes) {
 }
 
 export function useWallpapers() {
-  // 加载壁纸数据
-  const fetchWallpapers = async () => {
-    if (loaded.value)
-      return // 避免重复加载
+  /**
+   * 加载指定系列的壁纸数据
+   * @param {string} seriesId - 系列ID (desktop, mobile, avatar)
+   * @param {boolean} forceRefresh - 是否强制刷新（忽略缓存）
+   */
+  const fetchWallpapers = async (seriesId = 'desktop', forceRefresh = false) => {
+    // 验证系列ID
+    const seriesConfig = SERIES_CONFIG[seriesId]
+    if (!seriesConfig) {
+      error.value = `Invalid series: ${seriesId}`
+      return
+    }
+
+    // 如果已有缓存且不强制刷新，直接使用缓存
+    if (!forceRefresh && seriesCache.value[seriesId]) {
+      wallpapers.value = seriesCache.value[seriesId]
+      currentLoadedSeries.value = seriesId
+      return
+    }
 
     loading.value = true
     error.value = null
 
     try {
-      const response = await fetch(WALLPAPERS_DATA_URL)
+      const response = await fetch(seriesConfig.dataUrl)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
-      wallpapers.value = data.wallpapers || data
-      loaded.value = true
+      const wallpaperList = data.wallpapers || data
+
+      // 存入缓存
+      seriesCache.value[seriesId] = wallpaperList
+
+      // 更新当前数据
+      wallpapers.value = wallpaperList
+      currentLoadedSeries.value = seriesId
     }
     catch (e) {
-      console.error('Failed to fetch wallpapers:', e)
+      console.error(`Failed to fetch wallpapers for ${seriesId}:`, e)
       error.value = e.message || '加载壁纸数据失败'
+      // 如果加载失败，设置空数组
+      wallpapers.value = []
     }
     finally {
       loading.value = false
     }
   }
+
+  /**
+   * 切换到指定系列并加载数据
+   * @param {string} seriesId - 系列ID
+   */
+  const switchSeries = async (seriesId) => {
+    if (currentLoadedSeries.value === seriesId && wallpapers.value.length > 0) {
+      // 已经是当前系列且有数据，无需重新加载
+      return
+    }
+    await fetchWallpapers(seriesId)
+  }
+
+  /**
+   * 清除指定系列的缓存
+   * @param {string} seriesId - 系列ID，不传则清除所有缓存
+   */
+  const clearCache = (seriesId) => {
+    if (seriesId) {
+      delete seriesCache.value[seriesId]
+    }
+    else {
+      seriesCache.value = {}
+    }
+  }
+
+  // 是否已加载数据
+  const loaded = computed(() => wallpapers.value.length > 0)
 
   // 壁纸总数
   const total = computed(() => wallpapers.value.length)
@@ -101,7 +158,10 @@ export function useWallpapers() {
     loaded,
     total,
     statistics,
+    currentLoadedSeries,
     fetchWallpapers,
+    switchSeries,
+    clearCache,
     getWallpaperById,
     getWallpaperIndex,
     getPrevWallpaper,

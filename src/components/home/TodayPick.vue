@@ -49,7 +49,8 @@ function handleImageLoad() {
 
 function handleImageError() {
   imageError.value = true
-  imageLoaded.value = true
+  // 保持 imageLoaded 为 false，让骨架屏继续显示，避免空出一大块
+  imageLoaded.value = false
 }
 
 onMounted(() => {
@@ -76,18 +77,9 @@ onMounted(() => {
     </div>
 
     <div class="today-pick__content" @click="handleClick">
-      <!-- Skeleton -->
+      <!-- Skeleton - 图片未加载成功时一直显示，避免空出一大块 -->
       <div v-if="!imageLoaded" class="image-skeleton">
         <div class="skeleton-shimmer" />
-      </div>
-
-      <!-- Error State -->
-      <div v-if="imageError && imageLoaded" class="image-error">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M12 8v4M12 16h.01" />
-        </svg>
-        <span>加载失败</span>
       </div>
 
       <!-- Image -->

@@ -2,8 +2,7 @@
 import { computed, ref } from 'vue'
 import { useDevice } from '@/composables/useDevice'
 import { useViewMode } from '@/composables/useViewMode'
-import { useWallpaperType } from '@/composables/useWallpaperType'
-import { CATEGORY_OPTIONS, FORMAT_OPTIONS, SORT_OPTIONS } from '@/utils/constants'
+import { FORMAT_OPTIONS, SORT_OPTIONS } from '@/utils/constants'
 
 const props = defineProps({
   sortBy: {
@@ -17,6 +16,10 @@ const props = defineProps({
   categoryFilter: {
     type: String,
     default: 'all',
+  },
+  categoryOptions: {
+    type: Array,
+    default: () => [{ value: 'all', label: '全部分类' }],
   },
   resultCount: {
     type: Number,
@@ -32,7 +35,6 @@ const emit = defineEmits(['update:sortBy', 'update:formatFilter', 'update:catego
 
 const { isMobile } = useDevice()
 const { viewMode, setViewMode } = useViewMode()
-const { wallpaperType, setWallpaperType } = useWallpaperType()
 
 // 移动端筛选弹窗状态
 const showFilterPopup = ref(false)
@@ -42,7 +44,6 @@ const tempSortBy = ref(props.sortBy)
 const tempFormatFilter = ref(props.formatFilter)
 const tempCategoryFilter = ref(props.categoryFilter)
 const tempViewMode = ref(viewMode.value)
-const tempWallpaperType = ref(wallpaperType.value)
 
 // 是否有激活的筛选条件
 const hasActiveFilters = computed(() => {
@@ -99,7 +100,6 @@ function openFilterPopup() {
   tempFormatFilter.value = props.formatFilter
   tempCategoryFilter.value = props.categoryFilter
   tempViewMode.value = viewMode.value
-  tempWallpaperType.value = wallpaperType.value
   showFilterPopup.value = true
 }
 
@@ -112,7 +112,6 @@ function applyFilters() {
   emit('update:formatFilter', tempFormatFilter.value)
   emit('update:categoryFilter', tempCategoryFilter.value)
   setViewMode(tempViewMode.value)
-  setWallpaperType(tempWallpaperType.value)
   closeFilterPopup()
 }
 
@@ -121,7 +120,6 @@ function resetFilters() {
   tempFormatFilter.value = 'all'
   tempCategoryFilter.value = 'all'
   tempViewMode.value = 'grid'
-  tempWallpaperType.value = 'desktop'
 }
 </script>
 
@@ -153,38 +151,6 @@ function resetFilters() {
 
     <!-- PC 端筛选项 -->
     <div v-if="!isMobile" class="filter-right">
-      <!-- Wallpaper Type Toggle -->
-      <div class="wallpaper-type-toggle">
-        <!-- 滑动指示器 -->
-        <div class="type-slider" :class="{ 'is-mobile': wallpaperType === 'mobile' }" />
-        <button
-          class="type-btn"
-          :class="{ 'is-active': wallpaperType === 'desktop' }"
-          aria-label="电脑壁纸"
-          @click="setWallpaperType('desktop')"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="14" rx="2" />
-            <path d="M8 21h8M12 17v4" />
-          </svg>
-          <span>电脑壁纸</span>
-        </button>
-        <button
-          class="type-btn"
-          :class="{ 'is-active': wallpaperType === 'mobile' }"
-          aria-label="手机壁纸"
-          @click="setWallpaperType('mobile')"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="5" y="2" width="14" height="20" rx="2" />
-            <path d="M12 18h.01" />
-          </svg>
-          <span>手机壁纸</span>
-        </button>
-      </div>
-
-      <div class="filter-divider" />
-
       <!-- View Mode Toggle -->
       <div class="view-mode-toggle">
         <!-- 滑动指示器 -->
@@ -240,7 +206,7 @@ function resetFilters() {
           @change="handleCategoryChange"
         >
           <el-option
-            v-for="option in CATEGORY_OPTIONS"
+            v-for="option in categoryOptions"
             :key="option.value"
             :label="option.label"
             :value="option.value"
@@ -325,37 +291,6 @@ function resetFilters() {
 
           <!-- 筛选选项 -->
           <div class="popup-body">
-            <!-- 壁纸类型 -->
-            <div class="filter-group">
-              <h3 class="group-title">
-                壁纸类型
-              </h3>
-              <div class="option-grid wallpaper-type-grid">
-                <button
-                  class="option-btn type-option"
-                  :class="{ 'is-active': tempWallpaperType === 'desktop' }"
-                  @click="tempWallpaperType = 'desktop'"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="2" y="3" width="20" height="14" rx="2" />
-                    <path d="M8 21h8M12 17v4" />
-                  </svg>
-                  <span>电脑壁纸</span>
-                </button>
-                <button
-                  class="option-btn type-option"
-                  :class="{ 'is-active': tempWallpaperType === 'mobile' }"
-                  @click="tempWallpaperType = 'mobile'"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="5" y="2" width="14" height="20" rx="2" />
-                    <path d="M12 18h.01" />
-                  </svg>
-                  <span>手机壁纸</span>
-                </button>
-              </div>
-            </div>
-
             <!-- 视图模式 -->
             <div class="filter-group">
               <h3 class="group-title">
@@ -408,7 +343,7 @@ function resetFilters() {
               </h3>
               <div class="option-grid">
                 <button
-                  v-for="option in CATEGORY_OPTIONS"
+                  v-for="option in categoryOptions"
                   :key="option.value"
                   class="option-btn"
                   :class="{ 'is-active': tempCategoryFilter === option.value }"
@@ -480,7 +415,6 @@ function resetFilters() {
   border-radius: $radius-lg;
   border: 1px solid var(--color-border);
   transition: all 0.3s ease;
-  // PC 端底部间距
   margin-bottom: $spacing-lg;
 
   &.has-filters {
@@ -552,72 +486,6 @@ function resetFilters() {
   gap: $spacing-lg;
 }
 
-// PC 端壁纸类型切换
-.wallpaper-type-toggle {
-  display: flex;
-  align-items: center;
-  background: var(--color-bg-hover);
-  border-radius: $radius-md;
-  padding: 4px;
-  position: relative;
-}
-
-// 滑动指示器
-.type-slider {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: calc(50% - 4px);
-  height: calc(100% - 8px);
-  background: var(--color-bg-card);
-  border-radius: $radius-sm;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 0;
-
-  &.is-mobile {
-    transform: translateX(100%);
-  }
-}
-
-.type-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: $radius-sm;
-  color: var(--color-text-muted);
-  background: transparent;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  position: relative;
-  z-index: 1;
-
-  svg {
-    width: 16px;
-    height: 16px;
-    transition: transform 0.2s ease;
-  }
-
-  span {
-    white-space: nowrap;
-  }
-
-  &:hover {
-    color: var(--color-text-primary);
-
-    svg {
-      transform: scale(1.1);
-    }
-  }
-
-  &.is-active {
-    color: var(--color-accent);
-  }
-}
-
 .view-mode-toggle {
   display: flex;
   align-items: center;
@@ -627,7 +495,6 @@ function resetFilters() {
   position: relative;
 }
 
-// 视图模式滑动指示器
 .view-mode-slider {
   position: absolute;
   top: 4px;
@@ -873,29 +740,6 @@ function resetFilters() {
 .view-mode-grid {
   display: flex;
   gap: 8px;
-}
-
-.wallpaper-type-grid {
-  display: flex;
-  gap: 8px;
-}
-
-.type-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  padding: 12px 8px;
-
-  svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  span {
-    font-size: 12px;
-  }
 }
 
 .popup-footer {

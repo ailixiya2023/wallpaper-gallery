@@ -39,6 +39,39 @@ export function useFilter(wallpapers, externalSearchQuery = null) {
     localStorage.setItem(STORAGE_KEYS.CATEGORY, value)
   })
 
+  // 动态生成分类选项（从壁纸数据中提取）
+  const categoryOptions = computed(() => {
+    const categories = new Set()
+    wallpapers.value.forEach((w) => {
+      if (w.category) {
+        categories.add(w.category)
+      }
+    })
+    // 排序分类（按数量降序）
+    const categoryCount = {}
+    wallpapers.value.forEach((w) => {
+      if (w.category) {
+        categoryCount[w.category] = (categoryCount[w.category] || 0) + 1
+      }
+    })
+    const sortedCategories = [...categories].sort((a, b) => {
+      return (categoryCount[b] || 0) - (categoryCount[a] || 0)
+    })
+    // 返回选项格式
+    return [
+      { value: 'all', label: '全部分类' },
+      ...sortedCategories.map(cat => ({ value: cat, label: cat })),
+    ]
+  })
+
+  // 当分类选项变化时，检查当前选中的分类是否仍然有效
+  watch(categoryOptions, (newOptions) => {
+    const validValues = newOptions.map(opt => opt.value)
+    if (!validValues.includes(categoryFilter.value)) {
+      categoryFilter.value = 'all'
+    }
+  })
+
   // 过滤后的壁纸列表
   const filteredWallpapers = computed(() => {
     let result = [...wallpapers.value]
@@ -113,6 +146,7 @@ export function useFilter(wallpapers, externalSearchQuery = null) {
     sortBy,
     formatFilter,
     categoryFilter,
+    categoryOptions,
     filteredWallpapers,
     resultCount,
     hasActiveFilters,
