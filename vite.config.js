@@ -29,7 +29,7 @@ export default defineConfig({
     }),
     // 生产环境：对敏感文件进行混淆
     isProduction && obfuscatePlugin({
-      include: ['src/utils/codec.js', 'src/utils/constants.js', 'src/utils/format.js'],
+      include: ['src/utils/codec.js', 'src/utils/constants.js', 'src/utils/format.js', 'src/utils/anti-debug.js'],
     }),
   ].filter(Boolean),
   base: '/wallpaper-gallery/',

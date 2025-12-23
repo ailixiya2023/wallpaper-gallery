@@ -34,6 +34,20 @@
 - **回到顶部** - 平滑滚动回到页面顶部
 - **本地缩略图** - 预生成 WebP 缩略图，首页加载更快
 
+### 安全防护
+
+- **数据加密** - JSON 数据采用自定义编码方案（Base64 + 字符映射 + 反转）
+- **代码混淆** - 敏感文件（codec/constants/format/anti-debug）生产环境自动混淆
+- **反调试保护** - 多重检测机制防止控制台调试
+  - 快捷键拦截（F12、Ctrl+Shift+I 等）
+  - 禁用右键菜单
+  - 窗口尺寸检测
+  - debugger 时间差检测
+  - 持续 debugger 注入（阻止断点调试）
+  - console getter 检测
+  - Performance API 检测
+- **动态 URL 构建** - CDN 链接动态拼接，防止静态分析提取
+
 ### 路由与导航
 
 - **智能重定向** - 首次访问根据设备类型自动跳转到推荐系列
@@ -49,25 +63,26 @@
 - **动画**: GSAP
 - **样式**: Sass + postcss-pxtorem (移动端适配)
 - **路由**: Vue Router 4
+- **代码混淆**: javascript-obfuscator (自定义 Vite 插件)
 - **部署**: GitHub Pages + GitHub Actions
 
 ## 开发
 
 ```bash
 # 安装依赖
-npm install
+pnpm install
 
 # 启动开发服务器
-npm run dev
+pnpm dev
 
 # 生成壁纸数据（三个系列）
-npm run generate
+pnpm generate
 
 # 构建生产版本
-npm run build
+pnpm build
 
 # 预览构建结果
-npm run preview
+pnpm preview
 ```
 ## 项目结构
 
@@ -80,7 +95,9 @@ wallpaper-gallery/
 │       ├── mobile.json  # 手机壁纸数据
 │       └── avatar.json  # 头像数据
 ├── scripts/
-│   └── generate-data.js # 数据生成脚本
+│   └── generate-data.js # 数据生成脚本（含加密）
+├── build/
+│   └── vite-plugin-obfuscate.js # 自定义混淆插件
 ├── src/
 │   ├── assets/styles/   # 全局样式（Sass）
 │   ├── components/      # Vue 组件
@@ -98,6 +115,11 @@ wallpaper-gallery/
 │   ├── router/          # Vue Router 路由配置（智能重定向）
 │   ├── views/           # 页面视图组件
 │   └── utils/           # 工具函数和常量
+│       ├── constants.js    # 常量配置（动态 URL 构建）
+│       ├── format.js       # 格式化工具函数
+│       ├── codec.js        # 数据编解码
+│       ├── codec-config.js # 编解码配置
+│       └── anti-debug.js   # 反调试保护
 └── index.html
 ```
 
