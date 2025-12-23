@@ -9,17 +9,17 @@ const _urlParts = {
   p: 'https:/',
   h: '/cdn.jsdelivr.net',
   g: '/gh/IT-NuanxinPro',
-  r: '/nuanXinProPic@main',
+  r: `/nuanXinProPic@${CDN_VERSION}`,
 }
 
 /**
  * 动态构建图片 URL（防止静态分析）
  * @param {string} path - 相对路径，如 /wallpaper/desktop/xxx.png
- * @returns {string} 完整 URL（带版本号参数刷新缓存）
+ * @returns {string} 完整 URL
  */
 export function buildImageUrl(path) {
   const { p, h, g, r } = _urlParts
-  return `${p}${h}${g}${r}${path}?${CDN_VERSION}`
+  return `${p}${h}${g}${r}${path}`
 }
 
 /**
