@@ -454,14 +454,11 @@ const skeletonCount = computed(() => isMobile.value ? 6 : 12)
         />
       </div>
 
-      <!-- 移动端：加载更多提示 -->
-      <div v-if="isMobile" class="mobile-load-more">
-        <div v-if="isLoadingMore" class="loading-more">
+      <!-- 移动端：加载中提示 -->
+      <div v-if="isMobile && isLoadingMore" class="mobile-load-more">
+        <div class="loading-more">
           <LoadingSpinner size="sm" />
           <span>加载中...</span>
-        </div>
-        <div v-else-if="!hasMoreData && wallpapers.length > 0 && showGrid" class="no-more">
-          已加载全部 {{ wallpapers.length }} 张壁纸
         </div>
       </div>
 
@@ -568,12 +565,6 @@ const skeletonCount = computed(() => isMobile.value ? 6 : 12)
   gap: $spacing-sm;
   color: var(--color-text-muted);
   font-size: $font-size-sm;
-}
-
-.no-more {
-  color: var(--color-text-muted);
-  font-size: $font-size-xs;
-  padding: $spacing-md 0;
 }
 
 .wallpaper-grid {
