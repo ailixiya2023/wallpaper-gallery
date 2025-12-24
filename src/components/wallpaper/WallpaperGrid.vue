@@ -1,10 +1,11 @@
 <script setup>
 import { gsap } from 'gsap'
 import { Flip } from 'gsap/Flip'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import Pagination from '@/components/common/Pagination.vue'
+import { useDevice } from '@/composables/useDevice'
 import { usePagination } from '@/composables/usePagination'
 import { useViewMode } from '@/composables/useViewMode'
 import { useWallpaperType } from '@/composables/useWallpaperType'
@@ -43,10 +44,71 @@ gsap.registerPlugin(Flip)
 const router = useRouter()
 const { currentSeries, currentSeriesConfig, availableSeriesOptions } = useWallpaperType()
 const { viewMode } = useViewMode()
+const { isMobile } = useDevice()
 const gridRef = ref(null)
 const isAnimating = ref(false)
 // 用于控制实际显示的视图模式
 const displayViewMode = ref(viewMode.value)
+
+// ========================================
+// 移动端滚动加载相关
+// ========================================
+const MOBILE_PAGE_SIZE = 20
+const mobileDisplayCount = ref(MOBILE_PAGE_SIZE)
+const isLoadingMore = ref(false)
+const scrollPaused = ref(false) // 滚动加载暂停标记
+
+// 移动端显示的项目
+const mobileDisplayedItems = computed(() => {
+  return props.wallpapers.slice(0, mobileDisplayCount.value)
+})
+
+// 是否还有更多数据可加载
+const hasMoreData = computed(() => {
+  return mobileDisplayCount.value < props.wallpapers.length
+})
+
+// 滚动加载处理
+function handleScroll() {
+  if (!isMobile.value || scrollPaused.value || isLoadingMore.value || !hasMoreData.value)
+    return
+
+  const scrollTop = window.scrollY || document.documentElement.scrollTop
+  const windowHeight = window.innerHeight
+  const documentHeight = document.documentElement.scrollHeight
+
+  // 距离底部 200px 时触发加载
+  if (scrollTop + windowHeight >= documentHeight - 200) {
+    loadMore()
+  }
+}
+
+// 加载更多
+function loadMore() {
+  if (isLoadingMore.value || !hasMoreData.value)
+    return
+
+  isLoadingMore.value = true
+
+  // 模拟加载延迟，让动画更平滑
+  setTimeout(() => {
+    mobileDisplayCount.value = Math.min(
+      mobileDisplayCount.value + MOBILE_PAGE_SIZE,
+      props.wallpapers.length,
+    )
+    isLoadingMore.value = false
+  }, 300)
+}
+
+// 暂停滚动加载
+function pauseScrollLoad() {
+  scrollPaused.value = true
+}
+
+// 恢复滚动加载
+function resumeScrollLoad() {
+  scrollPaused.value = false
+}
 
 // 空状态类型判断
 const emptyStateType = computed(() => {
@@ -94,19 +156,24 @@ function handleResetFilters() {
   emit('resetFilters')
 }
 
-// 分页
+// 分页（桌面端使用）
 const DEFAULT_PAGE_SIZE = 30
 const PAGE_SIZES = [10, 20, 30, 50]
 const wallpapersRef = computed(() => props.wallpapers)
 const {
   currentPage,
   pageSize,
-  displayedItems,
+  displayedItems: paginatedItems,
   goToPage,
   setPageSize,
   pausePagination,
   resumePagination,
 } = usePagination(wallpapersRef, DEFAULT_PAGE_SIZE)
+
+// 统一的显示项目（根据设备类型选择）
+const displayedItems = computed(() => {
+  return isMobile.value ? mobileDisplayedItems.value : paginatedItems.value
+})
 
 // 用于控制列表显示的状态，避免闪烁
 const showGrid = ref(true)
@@ -127,8 +194,9 @@ watch(viewMode, async (newMode, oldMode) => {
   }
 
   isAnimating.value = true
-  // 暂停分页切换，防止动画期间切换页面
+  // 暂停分页/滚动加载，防止动画期间数据变化
   pausePagination()
+  pauseScrollLoad()
 
   try {
     const cards = gridRef.value.querySelectorAll('.wallpaper-card')
@@ -137,6 +205,7 @@ watch(viewMode, async (newMode, oldMode) => {
       displayViewMode.value = newMode
       isAnimating.value = false
       resumePagination()
+      resumeScrollLoad()
       return
     }
 
@@ -163,6 +232,7 @@ watch(viewMode, async (newMode, oldMode) => {
         isAnimating.value = false
         isFlipWarmedUp.value = true
         resumePagination()
+        resumeScrollLoad()
       },
     })
   }
@@ -171,6 +241,7 @@ watch(viewMode, async (newMode, oldMode) => {
     displayViewMode.value = newMode
     isAnimating.value = false
     resumePagination()
+    resumeScrollLoad()
   }
 })
 
@@ -220,6 +291,9 @@ function animateCardsIn() {
 
 // 初始加载动画
 onMounted(() => {
+  // 添加滚动监听（移动端）
+  window.addEventListener('scroll', handleScroll)
+
   if (gridRef.value && displayedItems.value.length > 0) {
     animateCardsIn()
   }
@@ -228,8 +302,15 @@ onMounted(() => {
   }
 })
 
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
+
 // 监听 wallpapers 变化（筛选/搜索时）
 watch(() => props.wallpapers, async (newVal, oldVal) => {
+  // 重置移动端显示数量
+  mobileDisplayCount.value = MOBILE_PAGE_SIZE
+
   if (oldVal && oldVal.length > 0 && newVal.length > 0) {
     showGrid.value = false
     await nextTick()
@@ -237,11 +318,11 @@ watch(() => props.wallpapers, async (newVal, oldVal) => {
       showGrid.value = true
       // 数据变化后播放入场动画
       animateCardsIn()
-    }, 50)
+    }, 10)
   }
 }, { deep: false })
 
-// 处理分页切换
+// 处理分页切换（桌面端）
 function handlePageChange(page) {
   // 滚动到顶部
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -258,7 +339,7 @@ function handlePageChange(page) {
   }, 100)
 }
 
-// 处理每页条数变化
+// 处理每页条数变化（桌面端）
 function handlePageSizeChange(size) {
   // 滚动到顶部
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -277,16 +358,25 @@ function handlePageSizeChange(size) {
 function handleSelect(wallpaper) {
   emit('select', wallpaper)
 }
+
+// 骨架屏数量
+const skeletonCount = computed(() => isMobile.value ? 6 : 12)
 </script>
 
 <template>
   <div class="wallpaper-grid-wrapper">
-    <!-- Loading State -->
-    <div v-if="loading" class="grid-loading">
-      <LoadingSpinner size="lg" />
-      <p class="loading-text">
-        加载{{ currentSeriesName }}中...
-      </p>
+    <!-- Loading State: 骨架屏 -->
+    <div v-if="loading" class="wallpaper-grid skeleton-grid" :class="[`view-${displayViewMode}`, `aspect-${aspectType}`]">
+      <div v-for="n in skeletonCount" :key="n" class="skeleton-card">
+        <div class="skeleton-image">
+          <div class="skeleton-shimmer" />
+        </div>
+        <!-- 桌面端显示骨架信息 -->
+        <div v-if="!isMobile" class="skeleton-info">
+          <div class="skeleton-title" />
+          <div class="skeleton-meta" />
+        </div>
+      </div>
     </div>
 
     <!-- Empty State: 系列数据为空 -->
@@ -364,8 +454,20 @@ function handleSelect(wallpaper) {
         />
       </div>
 
-      <!-- 分页 -->
+      <!-- 移动端：加载更多提示 -->
+      <div v-if="isMobile" class="mobile-load-more">
+        <div v-if="isLoadingMore" class="loading-more">
+          <LoadingSpinner size="sm" />
+          <span>加载中...</span>
+        </div>
+        <div v-else-if="!hasMoreData && wallpapers.length > 0 && showGrid" class="no-more">
+          已加载全部 {{ wallpapers.length }} 张壁纸
+        </div>
+      </div>
+
+      <!-- 桌面端：分页 -->
       <Pagination
+        v-if="!isMobile"
         :current="currentPage"
         :total="wallpapers.length"
         :page-size="pageSize"
@@ -382,11 +484,108 @@ function handleSelect(wallpaper) {
   min-height: 400px;
 }
 
+// ========================================
+// 骨架屏样式
+// ========================================
+.skeleton-grid {
+  animation: fadeIn 0.3s ease;
+}
+
+.skeleton-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  @include mobile-only {
+    border-radius: var(--radius-sm);
+  }
+}
+
+.skeleton-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16; // 默认竖屏比例
+  background: var(--color-bg-hover);
+  overflow: hidden;
+
+  .aspect-landscape & {
+    aspect-ratio: 16 / 10;
+  }
+
+  .aspect-square & {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+.skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, var(--color-bg-card) 50%, transparent 100%);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-info {
+  padding: $spacing-md;
+}
+
+.skeleton-title {
+  height: 16px;
+  width: 70%;
+  background: var(--color-bg-hover);
+  border-radius: $radius-sm;
+  margin-bottom: $spacing-sm;
+}
+
+.skeleton-meta {
+  height: 12px;
+  width: 40%;
+  background: var(--color-bg-hover);
+  border-radius: $radius-sm;
+}
+
+// ========================================
+// 移动端加载更多
+// ========================================
+.mobile-load-more {
+  padding: $spacing-lg 0;
+  text-align: center;
+}
+
+.loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  color: var(--color-text-muted);
+  font-size: $font-size-sm;
+}
+
+.no-more {
+  color: var(--color-text-muted);
+  font-size: $font-size-xs;
+  padding: $spacing-md 0;
+}
+
 .wallpaper-grid {
   display: grid;
   grid-template-columns: repeat(1, 1fr);
   gap: var(--grid-gap);
   transition: opacity 0.15s ease;
+
+  // 移动端更紧凑的间距
+  @include mobile-only {
+    gap: $spacing-sm;
+  }
 
   &.is-hidden {
     opacity: 0;
@@ -399,9 +598,8 @@ function handleSelect(wallpaper) {
 
   // 网格视图（默认）
   &.view-grid {
-    @include respond-to('sm') {
-      grid-template-columns: repeat(2, 1fr);
-    }
+    // 移动端两列
+    grid-template-columns: repeat(2, 1fr);
 
     @include respond-to('md') {
       grid-template-columns: repeat(3, 1fr);
@@ -440,15 +638,28 @@ function handleSelect(wallpaper) {
       column-count: 5;
     }
 
+    // 移动端更紧凑的间距
+    @include mobile-only {
+      column-gap: $spacing-sm;
+    }
+
     > * {
       break-inside: avoid;
       margin-bottom: calc(var(--grid-gap) * 1.2);
+
+      // 移动端更紧凑的间距
+      @include mobile-only {
+        margin-bottom: $spacing-sm;
+      }
     }
   }
 
   // 竖屏壁纸瀑布流需要更多列
   &.view-masonry.aspect-portrait {
-    column-count: 3;
+    // 移动端仍然保持2列
+    @include mobile-only {
+      column-count: 2;
+    }
 
     @include respond-to('md') {
       column-count: 4;
@@ -465,9 +676,8 @@ function handleSelect(wallpaper) {
 
   // 正方形壁纸（头像）网格优化
   &.view-grid.aspect-square {
-    @include respond-to('sm') {
-      grid-template-columns: repeat(3, 1fr);
-    }
+    // 移动端保持2列
+    grid-template-columns: repeat(2, 1fr);
 
     @include respond-to('md') {
       grid-template-columns: repeat(4, 1fr);
@@ -481,20 +691,6 @@ function handleSelect(wallpaper) {
       grid-template-columns: repeat(6, 1fr);
     }
   }
-}
-
-.grid-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-2xl;
-  gap: $spacing-md;
-}
-
-.loading-text {
-  font-size: $font-size-sm;
-  color: var(--color-text-muted);
 }
 
 .grid-empty {

@@ -62,6 +62,11 @@ const viewModeSliderPosition = computed(() => {
   }
 })
 
+// 移动端视图模式滑动指示器位置（只有瀑布流和列表两个选项）
+const mobileViewModeSliderPosition = computed(() => {
+  return viewMode.value === 'list' ? 'is-list' : 'is-masonry'
+})
+
 // 激活的筛选数量
 const activeFilterCount = computed(() => {
   let count = 0
@@ -119,7 +124,8 @@ function resetFilters() {
   tempSortBy.value = 'newest'
   tempFormatFilter.value = 'all'
   tempCategoryFilter.value = 'all'
-  tempViewMode.value = 'grid'
+  // 移动端默认视图为瀑布流
+  tempViewMode.value = isMobile.value ? 'masonry' : 'grid'
 }
 </script>
 
@@ -255,20 +261,20 @@ function resetFilters() {
 
     <!-- 移动端视图切换 + 筛选按钮 -->
     <div v-else class="filter-right-mobile">
-      <!-- 视图模式切换 - 即时生效 -->
+      <!-- 视图模式切换 - 即时生效（移动端只有瀑布流和列表两种模式） -->
       <div class="view-mode-toggle-mobile">
-        <div class="view-mode-slider-mobile" :class="viewModeSliderPosition" />
+        <div class="view-mode-slider-mobile" :class="mobileViewModeSliderPosition" />
         <button
           class="view-mode-btn-mobile"
-          :class="{ 'is-active': viewMode === 'grid' }"
-          aria-label="网格视图"
-          @click="setViewMode('grid')"
+          :class="{ 'is-active': viewMode === 'masonry' || viewMode === 'grid' }"
+          aria-label="瀑布流视图"
+          @click="setViewMode('masonry')"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
+            <rect x="3" y="3" width="7" height="10" />
+            <rect x="14" y="3" width="7" height="6" />
+            <rect x="3" y="16" width="7" height="5" />
+            <rect x="14" y="12" width="7" height="9" />
           </svg>
         </button>
         <button
@@ -279,19 +285,6 @@ function resetFilters() {
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-          </svg>
-        </button>
-        <button
-          class="view-mode-btn-mobile"
-          :class="{ 'is-active': viewMode === 'masonry' }"
-          aria-label="瀑布流视图"
-          @click="setViewMode('masonry')"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="10" />
-            <rect x="14" y="3" width="7" height="6" />
-            <rect x="3" y="16" width="7" height="5" />
-            <rect x="14" y="12" width="7" height="9" />
           </svg>
         </button>
       </div>
@@ -594,12 +587,13 @@ function resetFilters() {
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 0;
 
-  &.is-list {
-    transform: translateX(28px);
+  // 移动端只有两个位置：瀑布流（默认）和列表
+  &.is-masonry {
+    transform: translateX(0);
   }
 
-  &.is-masonry {
-    transform: translateX(56px);
+  &.is-list {
+    transform: translateX(28px);
   }
 }
 

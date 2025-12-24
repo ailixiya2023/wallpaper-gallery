@@ -551,12 +551,22 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   flex: 1;
-  min-height: 300px;
+  min-height: 200px;
+  max-height: 55vh; // 移动端限制图片区域高度，确保信息区域可见
   background: var(--color-bg-primary);
+  overflow: hidden;
+
+  // 移动端统一圆角
+  @include mobile-only {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
 
   @include tablet-up {
     min-width: 600px;
     min-height: 500px;
+    max-height: none; // 桌面端不限制
+    // 平板及以上左侧圆角
+    border-radius: var(--radius-xl) 0 0 var(--radius-xl);
   }
 
   @include desktop-up {
@@ -597,13 +607,20 @@ onUnmounted(() => {
 
 .modal-image {
   max-width: 100%;
-  max-height: 75vh;
+  max-height: 100%; // 移动端限制在容器内
   object-fit: contain;
   opacity: 0;
   animation: imageReveal 0.5s ease forwards;
 
+  // 移动端图片圆角与容器一致
+  @include mobile-only {
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  }
+
   @include tablet-up {
     max-height: 85vh;
+    // 平板及以上左侧圆角
+    border-radius: var(--radius-xl) 0 0 var(--radius-xl);
   }
 }
 
@@ -655,11 +672,18 @@ onUnmounted(() => {
   padding: $spacing-lg;
   background: var(--color-bg-card);
 
+  // 移动端底部圆角
+  @include mobile-only {
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+
   @include tablet-up {
     width: 320px;
     min-width: 320px;
     border-left: 1px solid var(--color-border);
     padding: $spacing-xl;
+    // 平板及以上右侧圆角
+    border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
   }
 }
 

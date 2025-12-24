@@ -236,6 +236,15 @@ function handleMouseLeave(e) {
   will-change: transform, box-shadow;
   // 添加过渡效果，让圆角变化更平滑
   transition: border-radius 0.4s ease;
+
+  // 移动端瀑布流和网格视图更紧凑的圆角
+  @include mobile-only {
+    &.view-grid,
+    &.view-masonry {
+      border-radius: var(--radius-sm);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+  }
 }
 
 .card-image {
@@ -347,6 +356,14 @@ function handleMouseLeave(e) {
 
 .card-info {
   padding: $spacing-md;
+
+  // 移动端瀑布流和网格视图隐藏信息区域
+  @include mobile-only {
+    .view-grid &,
+    .view-masonry & {
+      display: none;
+    }
+  }
 }
 
 .card-filename {
