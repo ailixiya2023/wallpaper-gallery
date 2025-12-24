@@ -258,33 +258,61 @@ function warmupFlip() {
 }
 
 // 页面切换时的入场动画
-function animateCardsIn() {
+function animateCardsIn(options = {}) {
   if (!gridRef.value)
     return
+
+  const { isFilter = false } = options
 
   nextTick(() => {
     const cards = gridRef.value?.querySelectorAll('.wallpaper-card')
     if (cards && cards.length > 0) {
-      gsap.fromTo(
-        cards,
-        {
-          opacity: 0,
-          y: 20,
-          scale: 0.98,
-        },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.35,
-          stagger: {
-            amount: 0.25,
-            from: 'start',
+      // 筛选切换时使用更丝滑的动画（卡片依次弹出）
+      if (isFilter) {
+        gsap.fromTo(
+          cards,
+          {
+            opacity: 0,
+            y: 40,
+            scale: 0.88,
           },
-          ease: 'power2.out',
-          onComplete: warmupFlip,
-        },
-      )
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.35,
+            stagger: {
+              each: 0.06, // 每个卡片固定延迟60ms，依次出现更明显
+              from: 'start',
+            },
+            ease: 'back.out(1.4)',
+            onComplete: warmupFlip,
+          },
+        )
+      }
+      else {
+        // 普通入场动画
+        gsap.fromTo(
+          cards,
+          {
+            opacity: 0,
+            y: 20,
+            scale: 0.98,
+          },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.35,
+            stagger: {
+              amount: 0.25,
+              from: 'start',
+            },
+            ease: 'power2.out',
+            onComplete: warmupFlip,
+          },
+        )
+      }
     }
   })
 }
@@ -306,19 +334,42 @@ onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
 })
 
-// 监听 wallpapers 变化（筛选/搜索时）
+// 监听 wallpapers 变化（筛选/搜索时）- 带丝滑动画
 watch(() => props.wallpapers, async (newVal, oldVal) => {
   // 重置移动端显示数量
   mobileDisplayCount.value = MOBILE_PAGE_SIZE
 
   if (oldVal && oldVal.length > 0 && newVal.length > 0) {
+    // 获取当前显示的卡片
+    const cards = gridRef.value?.querySelectorAll('.wallpaper-card')
+
+    if (cards && cards.length > 0) {
+      // 先播放退出动画
+      await gsap.to(cards, {
+        opacity: 0,
+        y: -15,
+        scale: 0.95,
+        duration: 0.25,
+        stagger: {
+          amount: 0.1,
+          from: 'end', // 从最后一个开始退出
+        },
+        ease: 'power2.in',
+      })
+    }
+
+    // 短暂隐藏，切换数据
     showGrid.value = false
     await nextTick()
-    setTimeout(() => {
-      showGrid.value = true
-      // 数据变化后播放入场动画
-      animateCardsIn()
-    }, 10)
+
+    // 显示新数据并播放入场动画
+    showGrid.value = true
+    animateCardsIn({ isFilter: true })
+  }
+  else if (newVal.length > 0) {
+    // 从无到有，直接播放入场动画
+    showGrid.value = true
+    animateCardsIn({ isFilter: true })
   }
 }, { deep: false })
 

@@ -68,7 +68,7 @@ const cardImageStyle = computed(() => {
 const listImageStyle = computed(() => {
   const [w, h] = props.aspectRatio.split('/').map(Number)
   const ratio = w / h
-  const baseWidth = ratio >= 1 ? 180 : 100 // 竖屏用窄宽度
+  const baseWidth = ratio >= 1 ? 200 : 120 // 横屏200px，竖屏120px
   return {
     width: `${baseWidth}px`,
     aspectRatio: props.aspectRatio.replace('/', ' / '),
@@ -437,6 +437,12 @@ function handleMouseLeave(e) {
   .card-filename {
     font-size: $font-size-md;
     margin-bottom: $spacing-sm;
+    // 列表模式下支持2行省略
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.4;
   }
 
   .card-meta {

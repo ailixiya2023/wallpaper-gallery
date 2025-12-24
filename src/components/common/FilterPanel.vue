@@ -582,15 +582,15 @@ function resetFilters() {
   border-radius: $radius-sm;
   padding: 2px;
   position: relative;
-  height: 32px;
+  height: 40px; // 增大高度便于点击
 }
 
 .view-mode-slider-mobile {
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 28px;
-  height: 28px;
+  width: 36px; // 增大尺寸
+  height: 36px;
   background: var(--color-bg-card);
   border-radius: 4px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -603,13 +603,13 @@ function resetFilters() {
   }
 
   &.is-list {
-    transform: translateX(28px);
+    transform: translateX(36px); // 滑动距离等于按钮宽度
   }
 }
 
 .view-mode-btn-mobile {
-  width: 28px;
-  height: 28px;
+  width: 36px; // 增大尺寸便于点击
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -621,8 +621,8 @@ function resetFilters() {
   transition: color 0.2s ease;
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 18px; // 稍大的图标
+    height: 18px;
   }
 
   &.is-active {
@@ -632,13 +632,13 @@ function resetFilters() {
 
 // 紧凑版筛选按钮
 .filter-btn-compact {
-  padding: 6px 10px;
-  min-width: 36px;
-  height: 32px;
+  padding: 8px 12px; // 增大内边距
+  min-width: 40px;
+  height: 40px; // 与视图切换按钮对齐
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 }
 
