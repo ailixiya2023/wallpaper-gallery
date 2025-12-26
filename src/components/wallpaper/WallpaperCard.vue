@@ -227,6 +227,8 @@ function handleMouseLeave(e) {
         ref="imageRef"
         :src="thumbnailUrl"
         :alt="wallpaper.filename"
+        width="800"
+        height="600"
         loading="lazy"
         :class="{ 'is-loaded': imageLoaded, 'is-error': imageError }"
         @load="handleImageLoad"
