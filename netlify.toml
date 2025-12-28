@@ -1,0 +1,64 @@
+# ========================================
+# Netlify 测试环境配置
+# ========================================
+# 生产环境: GitHub Pages → https://wallpaper.061129.xyz/
+# 测试环境: Netlify → 自动生成预览链接 / test-wallpaper.061129.xyz
+# ========================================
+
+[build]
+  # 构建命令
+  command = "pnpm install && pnpm build"
+  # 发布目录
+  publish = "dist"
+  # 忽略构建（仅在有代码变更时构建）
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- ."
+
+[build.environment]
+  # Node.js 版本
+  NODE_VERSION = "20"
+  # 标记为测试环境
+  VITE_ENV = "staging"
+
+# SPA 路由支持
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 缓存策略
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# 安全头
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Deploy Preview 配置（每个 PR 自动生成预览）
+[context.deploy-preview]
+  command = "pnpm install && pnpm build"
+
+[context.deploy-preview.environment]
+  VITE_ENV = "preview"
+
+# Branch Deploy 配置（dev 分支）
+[context.branch-deploy]
+  command = "pnpm install && pnpm build"
+
+[context.branch-deploy.environment]
+  VITE_ENV = "staging"
