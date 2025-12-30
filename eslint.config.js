@@ -19,6 +19,8 @@ export default antfu({
     'dist',
     'node_modules',
     'public',
+    'tests',
+    'docs',
     '*.md',
     '.claude/**',
     '.spec-workflow/**',
@@ -30,5 +32,6 @@ export default antfu({
   rules: {
     'no-console': 'off',
     'no-debugger': 'off',
+    'jsdoc/require-returns-description': 'off',
   },
 })

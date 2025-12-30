@@ -24,7 +24,7 @@ export function trackEvent(eventName, eventData = {}) {
   }
   else if (import.meta.env.DEV) {
     // 开发环境打印日志
-    // eslint-disable-next-line no-console
+
     console.log('📊 [Analytics]', eventName, eventData)
   }
 }

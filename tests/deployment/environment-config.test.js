@@ -18,14 +18,14 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.resolve(__dirname, '../..')
 
-describe('Environment Configuration Management', () => {
+describe('environment Configuration Management', () => {
   const envFiles = {
     development: path.join(ROOT_DIR, '.env.development'),
     staging: path.join(ROOT_DIR, '.env.staging'),
     production: path.join(ROOT_DIR, '.env.production'),
   }
 
-  describe('Environment Files Existence', () => {
+  describe('environment Files Existence', () => {
     it('should have all required environment files', () => {
       for (const [env, filePath] of Object.entries(envFiles)) {
         expect(fs.existsSync(filePath), `Missing ${env} env file`).toBe(true)
@@ -33,7 +33,7 @@ describe('Environment Configuration Management', () => {
     })
   })
 
-  describe('Environment Variables Consistency', () => {
+  describe('environment Variables Consistency', () => {
     const requiredVars = ['VITE_ENV', 'VITE_SHOW_ENV_BADGE']
 
     it('should have all required variables in each env file', () => {
@@ -53,7 +53,7 @@ describe('Environment Configuration Management', () => {
     })
   })
 
-  describe('Property Tests: Environment Indicator Display', () => {
+  describe('property Tests: Environment Indicator Display', () => {
     /**
      * Property 3: Environment Indicator Display
      * For any non-production environment, the application should display
@@ -99,7 +99,7 @@ describe('Environment Configuration Management', () => {
       fc.assert(
         fc.property(
           fc.constantFrom(...Object.entries(envColors)),
-          ([env, color]) => {
+          ([_env, color]) => {
             expect(envBadgeContent).toContain(color)
             return true
           },
@@ -118,7 +118,7 @@ describe('Environment Configuration Management', () => {
       fc.assert(
         fc.property(
           fc.constantFrom(...Object.entries(envLabels)),
-          ([env, label]) => {
+          ([_env, label]) => {
             expect(envBadgeContent).toContain(label)
             return true
           },
@@ -128,7 +128,7 @@ describe('Environment Configuration Management', () => {
     })
   })
 
-  describe('Property Tests: CDN Version Management', () => {
+  describe('property Tests: CDN Version Management', () => {
     /**
      * Property 4: CDN Version Management
      * For any environment deployment, the CDN version should be correctly
@@ -152,7 +152,7 @@ describe('Environment Configuration Management', () => {
     })
 
     it('should use CDN_VERSION in URL construction', () => {
-      expect(constantsContent).toContain('${CDN_VERSION}')
+      expect(constantsContent).toContain('$' + '{CDN_VERSION}')
     })
 
     it('should have CDN base URL properly constructed', () => {
@@ -161,7 +161,7 @@ describe('Environment Configuration Management', () => {
     })
   })
 
-  describe('Environment-Specific Settings', () => {
+  describe('environment-Specific Settings', () => {
     /**
      * Validates: Requirements 3.4
      * Different analytics, error tracking, and debugging settings per environment
@@ -196,7 +196,7 @@ describe('Environment Configuration Management', () => {
     })
   })
 
-  describe('Build Configuration Isolation', () => {
+  describe('build Configuration Isolation', () => {
     /**
      * 验证构建配置不会影响生产环境
      */
@@ -232,7 +232,7 @@ describe('Environment Configuration Management', () => {
   })
 })
 
-describe('Vercel Environment Variables', () => {
+describe('vercel Environment Variables', () => {
   /**
    * 验证 Vercel 配置中的环境变量设置
    */

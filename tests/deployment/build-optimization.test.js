@@ -16,11 +16,11 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.resolve(__dirname, '../..')
 
-describe('Build Optimization Configuration', () => {
+describe('build Optimization Configuration', () => {
   const viteConfigPath = path.join(ROOT_DIR, 'vite.config.js')
   const viteConfigContent = fs.readFileSync(viteConfigPath, 'utf-8')
 
-  describe('Compression Configuration', () => {
+  describe('compression Configuration', () => {
     it('should have compression plugin configured', () => {
       expect(viteConfigContent).toContain('compression')
     })
@@ -34,7 +34,7 @@ describe('Build Optimization Configuration', () => {
     })
   })
 
-  describe('Code Splitting Configuration', () => {
+  describe('code Splitting Configuration', () => {
     it('should have manual chunks configuration', () => {
       expect(viteConfigContent).toContain('manualChunks')
     })
@@ -48,13 +48,13 @@ describe('Build Optimization Configuration', () => {
     })
   })
 
-  describe('Build Output Configuration', () => {
+  describe('build Output Configuration', () => {
     it('should have CSS code splitting enabled', () => {
       expect(viteConfigContent).toContain('cssCodeSplit')
     })
 
     it('should use esbuild for minification', () => {
-      expect(viteConfigContent).toContain("minify: 'esbuild'")
+      expect(viteConfigContent).toContain('minify: \'esbuild\'')
     })
 
     it('should have chunk size warning limit', () => {
@@ -68,7 +68,7 @@ describe('Build Optimization Configuration', () => {
     })
   })
 
-  describe('Production Optimizations', () => {
+  describe('production Optimizations', () => {
     it('should drop console and debugger in production', () => {
       expect(viteConfigContent).toContain('drop:')
       expect(viteConfigContent).toContain('console')
@@ -80,7 +80,7 @@ describe('Build Optimization Configuration', () => {
     })
   })
 
-  describe('Property Tests: Bundle Optimization', () => {
+  describe('property Tests: Bundle Optimization', () => {
     /**
      * Property 5: Bundle Optimization
      * For any build output, the generated bundles should meet
@@ -131,13 +131,13 @@ describe('Build Optimization Configuration', () => {
   })
 })
 
-describe('Conditional Build Operations', () => {
+describe('conditional Build Operations', () => {
   /**
    * Property 7: Conditional Build Operations
    * 验证构建操作在不同环境中的行为
    */
 
-  describe('Environment-Specific Build Behavior', () => {
+  describe('environment-Specific Build Behavior', () => {
     it('should have production-only obfuscation', () => {
       const viteConfigPath = path.join(ROOT_DIR, 'vite.config.js')
       const viteConfigContent = fs.readFileSync(viteConfigPath, 'utf-8')
@@ -157,7 +157,7 @@ describe('Conditional Build Operations', () => {
     })
   })
 
-  describe('Build Script Consistency', () => {
+  describe('build Script Consistency', () => {
     it('should have consistent data generation across environments', () => {
       const generateDataPath = path.join(ROOT_DIR, 'scripts/generate-data.js')
       const generateDataContent = fs.readFileSync(generateDataPath, 'utf-8')
@@ -183,7 +183,7 @@ describe('Conditional Build Operations', () => {
     })
   })
 
-  describe('Property Tests: Build Consistency', () => {
+  describe('property Tests: Build Consistency', () => {
     const buildScripts = [
       { name: 'production', script: 'build', file: 'package.json' },
       { name: 'vercel', script: 'build:vercel', file: 'package.json' },
@@ -220,7 +220,7 @@ describe('Conditional Build Operations', () => {
   })
 })
 
-describe('Cache Headers Configuration', () => {
+describe('cache Headers Configuration', () => {
   /**
    * 验证缓存策略配置
    */
@@ -228,7 +228,7 @@ describe('Cache Headers Configuration', () => {
   const vercelConfigPath = path.join(ROOT_DIR, 'vercel.json')
   const vercelConfig = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf-8'))
 
-  describe('Static Asset Caching', () => {
+  describe('static Asset Caching', () => {
     it('should have cache headers for assets', () => {
       const assetsHeader = vercelConfig.headers.find(h => h.source.includes('assets'))
       expect(assetsHeader).toBeDefined()
@@ -243,7 +243,7 @@ describe('Cache Headers Configuration', () => {
     })
   })
 
-  describe('Property Tests: Cache Configuration', () => {
+  describe('property Tests: Cache Configuration', () => {
     const cacheableAssets = ['/assets/(.*)', '/(.*).js', '/(.*).css']
 
     it('should have cache headers for all cacheable asset types', () => {

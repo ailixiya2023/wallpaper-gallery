@@ -16,8 +16,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.resolve(__dirname, '../..')
 
-describe('Complete Deployment Pipeline Integration', () => {
-  describe('All Required Files Exist', () => {
+describe('complete Deployment Pipeline Integration', () => {
+  describe('all Required Files Exist', () => {
     const requiredFiles = [
       // Vercel 配置
       'vercel.json',
@@ -44,7 +44,7 @@ describe('Complete Deployment Pipeline Integration', () => {
     })
   })
 
-  describe('Production Environment (GitHub Pages)', () => {
+  describe('production Environment (GitHub Pages)', () => {
     it('should have complete production deployment configuration', () => {
       // GitHub Actions workflow
       const workflowPath = path.join(ROOT_DIR, '.github/workflows/deploy.yml')
@@ -72,7 +72,7 @@ describe('Complete Deployment Pipeline Integration', () => {
     })
   })
 
-  describe('Testing Environment (Vercel)', () => {
+  describe('testing Environment (Vercel)', () => {
     it('should have complete Vercel deployment configuration', () => {
       const vercelConfigPath = path.join(ROOT_DIR, 'vercel.json')
       const vercelConfig = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf-8'))
@@ -102,7 +102,7 @@ describe('Complete Deployment Pipeline Integration', () => {
     })
   })
 
-  describe('Cross-Environment Consistency', () => {
+  describe('cross-Environment Consistency', () => {
     it('should use same CDN repository across all environments', () => {
       const files = [
         '.github/workflows/deploy.yml',
@@ -130,10 +130,6 @@ describe('Complete Deployment Pipeline Integration', () => {
     })
 
     it('should have consistent output directory', () => {
-      // Vite config
-      const viteConfigPath = path.join(ROOT_DIR, 'vite.config.js')
-      const viteConfigContent = fs.readFileSync(viteConfigPath, 'utf-8')
-
       // Vercel config
       const vercelConfigPath = path.join(ROOT_DIR, 'vercel.json')
       const vercelConfig = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf-8'))
@@ -148,7 +144,7 @@ describe('Complete Deployment Pipeline Integration', () => {
     })
   })
 
-  describe('Property Tests: Complete Integration', () => {
+  describe('property Tests: Complete Integration', () => {
     const environments = ['development', 'staging', 'production']
 
     it('should have valid environment configuration for all environments', () => {
@@ -188,7 +184,7 @@ describe('Complete Deployment Pipeline Integration', () => {
     })
   })
 
-  describe('No Netlify Configuration Remaining', () => {
+  describe('no Netlify Configuration Remaining', () => {
     it('should not have netlify.toml file', () => {
       const netlifyPath = path.join(ROOT_DIR, 'netlify.toml')
       expect(fs.existsSync(netlifyPath)).toBe(false)
@@ -212,8 +208,8 @@ describe('Complete Deployment Pipeline Integration', () => {
   })
 })
 
-describe('Build Scripts Validation', () => {
-  describe('Package.json Scripts', () => {
+describe('build Scripts Validation', () => {
+  describe('package.json Scripts', () => {
     const packageJsonPath = path.join(ROOT_DIR, 'package.json')
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
 
@@ -230,7 +226,7 @@ describe('Build Scripts Validation', () => {
     })
   })
 
-  describe('Test Configuration', () => {
+  describe('test Configuration', () => {
     it('should have vitest configuration', () => {
       const vitestConfigPath = path.join(ROOT_DIR, 'vitest.config.js')
       expect(fs.existsSync(vitestConfigPath)).toBe(true)
@@ -246,8 +242,8 @@ describe('Build Scripts Validation', () => {
   })
 })
 
-describe('Security Configuration', () => {
-  describe('Vercel Security Headers', () => {
+describe('security Configuration', () => {
+  describe('vercel Security Headers', () => {
     const vercelConfigPath = path.join(ROOT_DIR, 'vercel.json')
     const vercelConfig = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf-8'))
 

@@ -17,11 +17,11 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.resolve(__dirname, '../..')
 
-describe('GitHub Actions Workflow Configuration', () => {
+describe('gitHub Actions Workflow Configuration', () => {
   const workflowPath = path.join(ROOT_DIR, '.github/workflows/deploy.yml')
   const workflowContent = fs.readFileSync(workflowPath, 'utf-8')
 
-  describe('Trigger Configuration', () => {
+  describe('trigger Configuration', () => {
     it('should trigger on push to main branch only', () => {
       expect(workflowContent).toContain('push:')
       expect(workflowContent).toContain('branches: [main]')
@@ -43,13 +43,13 @@ describe('GitHub Actions Workflow Configuration', () => {
     })
   })
 
-  describe('Build Configuration', () => {
+  describe('build Configuration', () => {
     it('should use pnpm for package management', () => {
       expect(workflowContent).toContain('pnpm')
     })
 
     it('should use Node.js 20', () => {
-      expect(workflowContent).toContain("node-version: '20'")
+      expect(workflowContent).toContain('node-version: \'20\'')
     })
 
     it('should install ImageMagick for image dimensions', () => {
@@ -62,7 +62,7 @@ describe('GitHub Actions Workflow Configuration', () => {
     })
   })
 
-  describe('CDN Version Synchronization', () => {
+  describe('cDN Version Synchronization', () => {
     it('should fetch CDN version from GitHub API', () => {
       expect(workflowContent).toContain('api.github.com')
       expect(workflowContent).toContain('nuanXinProPic/tags')
@@ -82,7 +82,7 @@ describe('GitHub Actions Workflow Configuration', () => {
     })
   })
 
-  describe('Deployment Configuration', () => {
+  describe('deployment Configuration', () => {
     it('should deploy to GitHub Pages', () => {
       expect(workflowContent).toContain('github-pages')
       expect(workflowContent).toContain('deploy-pages')
@@ -100,8 +100,8 @@ describe('GitHub Actions Workflow Configuration', () => {
   })
 })
 
-describe('Environment Isolation', () => {
-  describe('Production vs Testing Environment', () => {
+describe('environment Isolation', () => {
+  describe('production vs Testing Environment', () => {
     it('should have separate deployment targets', () => {
       // GitHub Actions -> GitHub Pages (production)
       const workflowPath = path.join(ROOT_DIR, '.github/workflows/deploy.yml')
@@ -129,7 +129,7 @@ describe('Environment Isolation', () => {
     })
   })
 
-  describe('Property Tests: Environment Isolation', () => {
+  describe('property Tests: Environment Isolation', () => {
     const productionIndicators = [
       { file: '.github/workflows/deploy.yml', pattern: 'branches: [main]' },
       { file: '.github/workflows/deploy.yml', pattern: 'github-pages' },
@@ -174,8 +174,8 @@ describe('Environment Isolation', () => {
   })
 })
 
-describe('CDN Version Consistency', () => {
-  describe('Version Update Mechanism', () => {
+describe('cDN Version Consistency', () => {
+  describe('version Update Mechanism', () => {
     it('should have same CDN version update logic in both environments', () => {
       // GitHub Actions
       const workflowPath = path.join(ROOT_DIR, '.github/workflows/deploy.yml')
@@ -211,7 +211,7 @@ describe('CDN Version Consistency', () => {
     })
   })
 
-  describe('Property Tests: CDN Consistency', () => {
+  describe('property Tests: CDN Consistency', () => {
     const cdnReferences = [
       '.github/workflows/deploy.yml',
       'scripts/vercel-build.js',

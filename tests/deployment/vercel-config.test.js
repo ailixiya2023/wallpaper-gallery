@@ -14,12 +14,12 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.resolve(__dirname, '../..')
 
-describe('Vercel Configuration Validation', () => {
+describe('vercel Configuration Validation', () => {
   // 读取 vercel.json 配置
   const vercelConfigPath = path.join(ROOT_DIR, 'vercel.json')
   const vercelConfig = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf-8'))
 
-  describe('Basic Configuration', () => {
+  describe('basic Configuration', () => {
     it('should have valid framework setting', () => {
       expect(vercelConfig.framework).toBe('vite')
     })
@@ -37,7 +37,7 @@ describe('Vercel Configuration Validation', () => {
     })
   })
 
-  describe('SPA Routing Configuration', () => {
+  describe('sPA Routing Configuration', () => {
     it('should have rewrites for SPA routing', () => {
       expect(vercelConfig.rewrites).toBeDefined()
       expect(Array.isArray(vercelConfig.rewrites)).toBe(true)
@@ -51,7 +51,7 @@ describe('Vercel Configuration Validation', () => {
     })
   })
 
-  describe('Cache Headers Configuration', () => {
+  describe('cache Headers Configuration', () => {
     it('should have headers configuration', () => {
       expect(vercelConfig.headers).toBeDefined()
       expect(Array.isArray(vercelConfig.headers)).toBe(true)
@@ -81,7 +81,7 @@ describe('Vercel Configuration Validation', () => {
     })
   })
 
-  describe('Git Deployment Configuration', () => {
+  describe('git Deployment Configuration', () => {
     it('should have git deployment settings', () => {
       expect(vercelConfig.git).toBeDefined()
       expect(vercelConfig.git.deploymentEnabled).toBeDefined()
@@ -97,7 +97,7 @@ describe('Vercel Configuration Validation', () => {
   })
 
   // Property-based tests
-  describe('Property Tests: Environment Configuration Loading', () => {
+  describe('property Tests: Environment Configuration Loading', () => {
     /**
      * Property 2: Environment Configuration Loading
      * For any deployment environment, the build pipeline should load
@@ -112,7 +112,7 @@ describe('Vercel Configuration Validation', () => {
       fc.assert(
         fc.property(
           fc.constantFrom(...validEnvironments),
-          (environment) => {
+          (_environment) => {
             // 验证配置结构对所有环境都是一致的
             expect(vercelConfig.framework).toBeDefined()
             expect(vercelConfig.buildCommand).toBeDefined()
@@ -134,7 +134,7 @@ describe('Vercel Configuration Validation', () => {
               value: fc.string(),
             })),
           })),
-          (headers) => {
+          (_headers) => {
             // 验证实际配置中的 headers 结构
             for (const header of vercelConfig.headers) {
               expect(header.source).toBeDefined()
@@ -177,7 +177,7 @@ describe('Vercel Configuration Validation', () => {
   })
 })
 
-describe('Environment Files Validation', () => {
+describe('environment Files Validation', () => {
   const envFiles = [
     { name: '.env.development', env: 'development' },
     { name: '.env.staging', env: 'staging' },
@@ -200,7 +200,7 @@ describe('Environment Files Validation', () => {
   }
 
   // Property test for environment file consistency
-  describe('Property Tests: Environment File Consistency', () => {
+  describe('property Tests: Environment File Consistency', () => {
     it('should have consistent variable naming across all env files', () => {
       fc.assert(
         fc.property(

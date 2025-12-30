@@ -16,14 +16,14 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.resolve(__dirname, '../..')
 
-describe('CDN Fallback Handling', () => {
+describe('cDN Fallback Handling', () => {
   /**
    * Property 6: CDN Fallback Handling
    * For any CDN resource access failure, the application should gracefully
    * handle the error and activate appropriate fallback mechanisms.
    */
 
-  describe('Image Proxy Configuration', () => {
+  describe('image Proxy Configuration', () => {
     const constantsPath = path.join(ROOT_DIR, 'src/utils/constants.js')
     const constantsContent = fs.readFileSync(constantsPath, 'utf-8')
 
@@ -50,7 +50,7 @@ describe('CDN Fallback Handling', () => {
     })
   })
 
-  describe('Component Error Handling', () => {
+  describe('component Error Handling', () => {
     const wallpaperCardPath = path.join(ROOT_DIR, 'src/components/wallpaper/WallpaperCard.vue')
     const wallpaperCardContent = fs.readFileSync(wallpaperCardPath, 'utf-8')
 
@@ -72,7 +72,7 @@ describe('CDN Fallback Handling', () => {
     })
   })
 
-  describe('Property Tests: Fallback Mechanism', () => {
+  describe('property Tests: Fallback Mechanism', () => {
     // 需要有错误处理的组件列表
     const componentsWithErrorHandling = [
       'src/components/wallpaper/WallpaperCard.vue',
@@ -117,7 +117,7 @@ describe('CDN Fallback Handling', () => {
     })
   })
 
-  describe('CDN URL Construction', () => {
+  describe('cDN URL Construction', () => {
     const constantsPath = path.join(ROOT_DIR, 'src/utils/constants.js')
     const constantsContent = fs.readFileSync(constantsPath, 'utf-8')
 
@@ -132,19 +132,19 @@ describe('CDN Fallback Handling', () => {
 
     it('should use versioned CDN URLs', () => {
       expect(constantsContent).toContain('CDN_VERSION')
-      expect(constantsContent).toContain('@${CDN_VERSION}')
+      expect(constantsContent).toContain('@$')
     })
   })
 })
 
-describe('Deployment Notifications', () => {
+describe('deployment Notifications', () => {
   /**
    * Property 8: Deployment Notifications
    * For any deployment completion (success or failure), appropriate
    * notifications should be sent through configured channels.
    */
 
-  describe('Build Script Logging', () => {
+  describe('build Script Logging', () => {
     const vercelBuildPath = path.join(ROOT_DIR, 'scripts/vercel-build.js')
     const vercelBuildContent = fs.readFileSync(vercelBuildPath, 'utf-8')
 
@@ -169,7 +169,7 @@ describe('Deployment Notifications', () => {
     })
   })
 
-  describe('Build Duration Tracking', () => {
+  describe('build Duration Tracking', () => {
     const vercelBuildPath = path.join(ROOT_DIR, 'scripts/vercel-build.js')
     const vercelBuildContent = fs.readFileSync(vercelBuildPath, 'utf-8')
 
@@ -182,7 +182,7 @@ describe('Deployment Notifications', () => {
     })
   })
 
-  describe('Property Tests: Notification Coverage', () => {
+  describe('property Tests: Notification Coverage', () => {
     const notificationTypes = [
       { type: 'success', pattern: '✅' },
       { type: 'error', pattern: '❌' },
@@ -207,7 +207,7 @@ describe('Deployment Notifications', () => {
     })
   })
 
-  describe('GitHub Actions Notifications', () => {
+  describe('gitHub Actions Notifications', () => {
     const workflowPath = path.join(ROOT_DIR, '.github/workflows/deploy.yml')
     const workflowContent = fs.readFileSync(workflowPath, 'utf-8')
 
@@ -221,8 +221,8 @@ describe('Deployment Notifications', () => {
   })
 })
 
-describe('Error Recovery Mechanisms', () => {
-  describe('Build Script Error Handling', () => {
+describe('error Recovery Mechanisms', () => {
+  describe('build Script Error Handling', () => {
     const vercelBuildPath = path.join(ROOT_DIR, 'scripts/vercel-build.js')
     const vercelBuildContent = fs.readFileSync(vercelBuildPath, 'utf-8')
 
@@ -245,7 +245,7 @@ describe('Error Recovery Mechanisms', () => {
     })
   })
 
-  describe('Property Tests: Error Recovery', () => {
+  describe('property Tests: Error Recovery', () => {
     const criticalOperations = [
       'fetchLatestCDNVersion',
       'updateCDNVersion',

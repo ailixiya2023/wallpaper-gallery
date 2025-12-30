@@ -17,12 +17,12 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const ROOT_DIR = path.resolve(__dirname, '../..')
 
-describe('Build Process Sequencing', () => {
+describe('build Process Sequencing', () => {
   // 读取 vercel-build.js 脚本内容进行静态分析
   const vercelBuildPath = path.join(ROOT_DIR, 'scripts/vercel-build.js')
   const vercelBuildContent = fs.readFileSync(vercelBuildPath, 'utf-8')
 
-  describe('Script Structure Validation', () => {
+  describe('script Structure Validation', () => {
     it('should have CDN version fetch function defined before build', () => {
       const cdnFetchIndex = vercelBuildContent.indexOf('fetchLatestCDNVersion')
       const buildAppIndex = vercelBuildContent.indexOf('buildApplication')
@@ -48,9 +48,9 @@ describe('Build Process Sequencing', () => {
     })
   })
 
-  describe('Build Sequence in Main Function', () => {
+  describe('build Sequence in Main Function', () => {
     // 提取 main 函数内容
-    const mainFunctionMatch = vercelBuildContent.match(/async function main\(\)\s*\{[\s\S]*?\n\}/m)
+    const mainFunctionMatch = vercelBuildContent.match(/async function main\(\)\s*\{[\s\S]*?\n\}/)
     const mainFunctionContent = mainFunctionMatch ? mainFunctionMatch[0] : ''
 
     it('should fetch CDN version before updating constants', () => {
@@ -81,7 +81,7 @@ describe('Build Process Sequencing', () => {
     })
   })
 
-  describe('Property Tests: Build Process Sequencing', () => {
+  describe('property Tests: Build Process Sequencing', () => {
     /**
      * Property 1: Build Process Sequencing
      * For any build execution, CDN synchronization operations should
@@ -114,7 +114,7 @@ describe('Build Process Sequencing', () => {
             const secondStep = buildSteps[second]
 
             // 在 main 函数中，第一个步骤应该在第二个步骤之前出现
-            const mainFunctionMatch = vercelBuildContent.match(/async function main\(\)\s*\{[\s\S]*?\n\}/m)
+            const mainFunctionMatch = vercelBuildContent.match(/async function main\(\)\s*\{[\s\S]*?\n\}/)
             const mainFunctionContent = mainFunctionMatch ? mainFunctionMatch[0] : ''
 
             const firstIndex = mainFunctionContent.indexOf(firstStep)
@@ -171,7 +171,7 @@ describe('Build Process Sequencing', () => {
     })
   })
 
-  describe('Environment Isolation', () => {
+  describe('environment Isolation', () => {
     /**
      * 验证 Vercel 构建脚本不会影响生产环境
      */
@@ -204,7 +204,7 @@ describe('Build Process Sequencing', () => {
   })
 })
 
-describe('CDN Sync Retry Logic', () => {
+describe('cDN Sync Retry Logic', () => {
   /**
    * Property 9: CDN Sync Retry Logic
    * For any CDN synchronization failure, the system should implement
@@ -215,7 +215,7 @@ describe('CDN Sync Retry Logic', () => {
   const vercelBuildPath = path.join(ROOT_DIR, 'scripts/vercel-build.js')
   const vercelBuildContent = fs.readFileSync(vercelBuildPath, 'utf-8')
 
-  describe('Retry Configuration', () => {
+  describe('retry Configuration', () => {
     it('should have MAX_RETRIES configuration', () => {
       expect(vercelBuildContent).toContain('MAX_RETRIES')
     })
@@ -229,7 +229,7 @@ describe('CDN Sync Retry Logic', () => {
     })
   })
 
-  describe('Retry Implementation', () => {
+  describe('retry Implementation', () => {
     it('should implement retry loop', () => {
       // 检查是否有重试循环
       expect(vercelBuildContent).toMatch(/for\s*\(\s*let\s+attempt/)
@@ -245,7 +245,7 @@ describe('CDN Sync Retry Logic', () => {
     })
   })
 
-  describe('Property Tests: Retry Logic', () => {
+  describe('property Tests: Retry Logic', () => {
     // 提取重试延迟配置
     const retryDelaysMatch = vercelBuildContent.match(/RETRY_DELAYS:\s*\[([\d,\s]+)\]/)
     const retryDelays = retryDelaysMatch
