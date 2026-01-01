@@ -190,8 +190,8 @@ function closeDrawer() {
   background: var(--color-bg-primary);
   border-radius: 16px 16px 0 0;
   z-index: 1001;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto 1fr auto; // 头部 自动，主体 自适应，底部 自动
   overflow: hidden;
 }
 
@@ -232,8 +232,7 @@ function closeDrawer() {
 
 .drawer-body {
   display: flex;
-  flex: 1;
-  min-height: 0;
+  min-height: 0; // 允许子元素正确缩小
   overflow: hidden;
 }
 
@@ -244,6 +243,7 @@ function closeDrawer() {
   background: var(--color-bg-secondary);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  max-height: calc(70vh - 120px); // 减去头部和底部的高度
 }
 
 .category-item {
@@ -287,6 +287,7 @@ function closeDrawer() {
   padding: 12px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  max-height: calc(70vh - 120px); // 减去头部和底部的高度
 }
 
 .subcategory-header {
@@ -356,11 +357,7 @@ function closeDrawer() {
   padding: 12px 16px;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-border);
-  flex-shrink: 0;
   background: var(--color-bg-primary);
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
 }
 
 .confirm-btn {
