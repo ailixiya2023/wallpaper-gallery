@@ -375,10 +375,16 @@ function getResolutionLabel(width, height) {
   if (maxDim >= 7680) {
     return { label: '8K', type: 'danger' }
   }
+  else if (maxDim >= 5760) {
+    return { label: '6K', type: 'warning' }
+  }
+  else if (maxDim >= 5120) {
+    return { label: '5K', type: 'warning' }
+  }
   else if (maxDim >= 3840) {
     return { label: '4K', type: 'warning' }
   }
-  else if (maxDim >= 2560) {
+  else if (maxDim >= 2048) {
     return { label: '2K', type: 'info' }
   }
   else if (maxDim >= 1920) {

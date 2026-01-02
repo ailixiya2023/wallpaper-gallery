@@ -23,13 +23,32 @@ const props = defineProps({
 const emit = defineEmits(['close', 'prev', 'next'])
 
 // 设备检测
-const { isMobile } = useDevice()
+const { isMobile, isTablet, isDesktop, isLandscape, isPortrait } = useDevice()
 
 // 获取当前系列
 const { currentSeries } = useWallpaperType()
 
-// 是否显示裁剪功能（仅 PC 端且仅 desktop 系列）
+// 是否显示裁剪功能（PC端和平板端，仅 desktop 系列）
+// 平板用户也需要裁剪功能（4:3 iPad, 16:10 安卓, 3:2 Surface）
 const showCropFeature = computed(() => !isMobile.value && currentSeries.value === 'desktop')
+
+// 是否使用水平布局（PC端，或平板横屏时）
+const useHorizontalLayout = computed(() => {
+  if (isDesktop.value)
+    return true
+  if (isTablet.value && isLandscape.value)
+    return true
+  return false
+})
+
+// 是否使用紧凑信息布局（手机，或平板竖屏时）
+const useCompactInfo = computed(() => {
+  if (isMobile.value)
+    return true
+  if (isTablet.value && isPortrait.value)
+    return true
+  return false
+})
 
 // 裁剪弹窗状态
 const isCropModalOpen = ref(false)
@@ -377,7 +396,7 @@ onUnmounted(() => {
 <template>
   <Teleport to="body">
     <div v-if="isOpen && wallpaper" ref="modalRef" class="modal-overlay">
-      <div ref="contentRef" class="modal-content">
+      <div ref="contentRef" class="modal-content" :class="{ 'modal-content--horizontal': useHorizontalLayout }">
         <!-- Close Button -->
         <button class="modal-close" aria-label="关闭" @click="handleClose">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -474,8 +493,8 @@ onUnmounted(() => {
                 {{ displayFilename }}
               </h3>
               <div class="info-tags">
-                <!-- 移动端显示原图清晰度，PC端显示预览图清晰度 -->
-                <span v-if="isMobile && originalResolution" class="tag" :class="[`tag--${originalResolution.type || 'success'}`]">{{ originalResolution.label }}</span>
+                <!-- 紧凑布局显示原图清晰度，PC端显示预览图清晰度 -->
+                <span v-if="useCompactInfo && originalResolution" class="tag" :class="[`tag--${originalResolution.type || 'success'}`]">{{ originalResolution.label }}</span>
                 <span v-else class="tag" :class="[`tag--${resolution.type || 'success'}`]">{{ resolution.label }}</span>
                 <span class="tag tag--secondary">{{ fileExt }}</span>
                 <!-- 浏览量和下载量 -->
@@ -560,8 +579,8 @@ onUnmounted(() => {
               </template>
             </div>
 
-            <!-- 原图信息卡片（仅PC端且有预览图时显示，突出原图质量吸引下载） -->
-            <div v-if="!isMobile && hasPreview && originalResolution" class="original-info-card">
+            <!-- 原图信息卡片（仅水平布局且有预览图时显示，突出原图质量吸引下载） -->
+            <div v-if="useHorizontalLayout && hasPreview && originalResolution" class="original-info-card">
               <div class="original-info-header">
                 <span class="original-label">原图</span>
                 <span class="original-resolution-tag" :class="[`tag--${originalResolution.type || 'success'}`]">
@@ -645,7 +664,7 @@ onUnmounted(() => {
   backdrop-filter: blur(12px);
   padding: $spacing-sm;
 
-  @include tablet-up {
+  @include desktop-up {
     padding: $spacing-lg;
   }
 }
@@ -662,14 +681,21 @@ onUnmounted(() => {
   overflow: hidden;
   box-shadow: var(--shadow-xl);
 
-  @include tablet-up {
-    flex-direction: row;
-    max-width: 1400px;
+  // 平板竖屏：垂直布局，更宽
+  @include tablet-only {
+    max-width: 90vw;
     max-height: 90vh;
   }
 
-  @include desktop-up {
-    max-width: 1600px;
+  // 水平布局模式（桌面端，或平板横屏时由 JS 动态添加）
+  &--horizontal {
+    flex-direction: row;
+    max-width: 1400px;
+    max-height: 90vh;
+
+    @include large-desktop-up {
+      max-width: 1600px;
+    }
   }
 }
 
@@ -730,12 +756,9 @@ onUnmounted(() => {
 
   &--next {
     right: $spacing-md;
-
-    @include tablet-up {
-      right: calc(320px + $spacing-lg);
-    }
   }
 
+  // 移动端：较小的按钮
   @include mobile-only {
     width: 40px;
     height: 40px;
@@ -747,31 +770,38 @@ onUnmounted(() => {
   }
 }
 
+// 水平布局时，下一张按钮需要偏移（信息面板在右侧）
+.modal-content--horizontal .modal-nav--next {
+  right: calc(320px + $spacing-lg);
+}
+
 .modal-image-container {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 1;
-  min-height: 300px; // 增加移动端初始高度，避免图片加载后弹窗突然变大
-  max-height: 60vh; // 移动端限制图片区域高度，增大显示空间
+  min-height: 300px; // 垂直布局初始高度
+  max-height: 60vh; // 垂直布局限制图片区域高度
   background: var(--color-bg-primary);
   overflow: hidden;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 
-  // 移动端统一圆角
-  @include mobile-only {
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  // 平板竖屏：稍大的图片区域
+  @include tablet-only {
+    min-height: 400px;
+    max-height: 65vh;
   }
+}
 
-  @include tablet-up {
-    min-width: 600px;
-    min-height: 500px;
-    max-height: none; // 桌面端不限制
-    // 平板及以上左侧圆角
-    border-radius: var(--radius-xl) 0 0 var(--radius-xl);
-  }
+// 水平布局时的图片容器样式
+.modal-content--horizontal .modal-image-container {
+  min-width: 600px;
+  min-height: 500px;
+  max-height: none;
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
 
-  @include desktop-up {
+  @include large-desktop-up {
     min-width: 800px;
   }
 }
@@ -809,21 +839,17 @@ onUnmounted(() => {
 
 .modal-image {
   max-width: 100%;
-  max-height: 100%; // 移动端限制在容器内
+  max-height: 100%; // 垂直布局限制在容器内
   object-fit: contain;
   opacity: 0;
   animation: imageReveal 0.5s ease forwards;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
 
-  // 移动端图片圆角与容器一致
-  @include mobile-only {
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  }
-
-  @include tablet-up {
-    max-height: 85vh;
-    // 平板及以上左侧圆角
-    border-radius: var(--radius-xl) 0 0 var(--radius-xl);
-  }
+// 水平布局时的图片样式
+.modal-content--horizontal .modal-image {
+  max-height: 85vh;
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
 }
 
 @keyframes imageReveal {
@@ -883,14 +909,20 @@ onUnmounted(() => {
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   }
 
-  @include tablet-up {
-    width: 320px;
-    min-width: 320px;
-    border-left: 1px solid var(--color-border);
-    padding: $spacing-xl;
-    // 平板及以上右侧圆角
-    border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+  // 平板竖屏：适中间距
+  @include tablet-only {
+    gap: $spacing-md;
+    padding: $spacing-lg;
   }
+}
+
+// 水平布局时的信息面板样式
+.modal-content--horizontal .modal-info {
+  width: 320px;
+  min-width: 320px;
+  border-left: 1px solid var(--color-border);
+  padding: $spacing-xl;
+  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
 }
 
 .info-header {

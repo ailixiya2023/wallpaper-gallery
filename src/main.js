@@ -1,3 +1,4 @@
+import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 // 反调试保护（生产环境）
 import { initAntiDebug } from '@/utils/anti-debug'
@@ -31,7 +32,9 @@ function loadUmamiAnalytics() {
 loadUmamiAnalytics()
 
 const app = createApp(App)
+const pinia = createPinia()
 
+app.use(pinia)
 app.use(router)
 app.mount('#app')
 

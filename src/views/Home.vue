@@ -5,103 +5,80 @@ import DiyAvatarBanner from '@/components/avatar/DiyAvatarBanner.vue'
 import AnnouncementBanner from '@/components/common/AnnouncementBanner.vue'
 import BackToTop from '@/components/common/BackToTop.vue'
 import FilterPanel from '@/components/common/FilterPanel.vue'
-import PopularWallpapers from '@/components/home/PopularWallpapers.vue'
-// import TodayPick from '@/components/home/TodayPick.vue' // 暂时隐藏，后续可能改为3D轮播
+import PopularWallpapers3D from '@/components/home/PopularWallpapers3D.vue'
+// 2D 版本备用：import PopularWallpapers from '@/components/home/PopularWallpapers.vue'
 import PortraitWallpaperModal from '@/components/wallpaper/PortraitWallpaperModal.vue'
 import WallpaperGrid from '@/components/wallpaper/WallpaperGrid.vue'
 import WallpaperModal from '@/components/wallpaper/WallpaperModal.vue'
 
-import { useFilter } from '@/composables/useFilter'
+// Composables
 import { useModal } from '@/composables/useModal'
-import { useSearch } from '@/composables/useSearch'
-import { useWallpapers } from '@/composables/useWallpapers'
-import { useWallpaperType } from '@/composables/useWallpaperType'
-import { getPopularByTimeRange, getPopularWallpapers, isSupabaseConfigured } from '@/utils/supabase'
+// Pinia Stores
+import { useFilterStore } from '@/stores/filter'
+import { usePopularityStore } from '@/stores/popularity'
+import { useSeriesStore } from '@/stores/series'
+import { useWallpaperStore } from '@/stores/wallpaper'
 
 const route = useRoute()
 
-// 系列管理
-const { currentSeries, initFromRoute } = useWallpaperType()
+// ========================================
+// Stores
+// ========================================
+const seriesStore = useSeriesStore()
+const wallpaperStore = useWallpaperStore()
+const popularityStore = usePopularityStore()
+const filterStore = useFilterStore()
 
-// 是否使用竖屏弹窗（手机壁纸、头像使用竖屏弹窗）
+// ========================================
+// 初始化标记（防止重复加载）
+// ========================================
+const isInitialized = ref(false)
+const isLoading = ref(false)
+
+// ========================================
+// Computed
+// ========================================
+
+// 当前系列
+const currentSeries = computed(() => seriesStore.currentSeries)
+
+// 是否使用竖屏弹窗
 const usePortraitModal = computed(() => ['mobile', 'avatar'].includes(currentSeries.value))
 
-// Wallpapers
-const { wallpapers, loading: wallpapersLoading, error, total, fetchWallpapers, getPrevWallpaper, getNextWallpaper } = useWallpapers()
+// 整体加载状态
+const loading = computed(() => isLoading.value || wallpaperStore.loading || popularityStore.loading)
 
-// 热门数据（用于排序）
-const popularityData = ref([])
-const weeklyPopularityData = ref([])
-const monthlyPopularityData = ref([])
-const popularityLoading = ref(false)
+// 错误状态
+const error = computed(() => wallpaperStore.error)
 
-// 整体加载状态：壁纸和热门数据都加载完成才算完成
-const loading = computed(() => wallpapersLoading.value || popularityLoading.value)
+// 分类选项
+const categoryOptions = computed(() =>
+  filterStore.createCategoryOptions(wallpaperStore.wallpapers),
+)
 
-// 获取热门数据
-async function fetchPopularityData(series) {
-  if (!isSupabaseConfigured()) {
-    popularityData.value = []
-    weeklyPopularityData.value = []
-    monthlyPopularityData.value = []
-    return
-  }
-  popularityLoading.value = true
-  try {
-    // 并行获取全量、本周、本月热门数据
-    const [allData, weeklyData, monthlyData] = await Promise.all([
-      getPopularWallpapers(series, 100),
-      getPopularByTimeRange(series, 7, 100),
-      getPopularByTimeRange(series, 30, 100),
-    ])
-    popularityData.value = allData
-    weeklyPopularityData.value = weeklyData
-    monthlyPopularityData.value = monthlyData
-  }
-  catch (err) {
-    console.error('获取热门数据失败:', err)
-    popularityData.value = []
-    weeklyPopularityData.value = []
-    monthlyPopularityData.value = []
-  }
-  finally {
-    popularityLoading.value = false
-  }
-}
+// 二级分类选项
+const subcategoryOptions = computed(() =>
+  filterStore.createSubcategoryOptions(categoryOptions.value),
+)
 
-// 共享搜索状态
-const { searchQuery, setWallpapers } = useSearch()
+// 筛选和排序后的壁纸列表
+const filteredWallpapers = computed(() =>
+  filterStore.getFilteredAndSorted(wallpaperStore.wallpapers),
+)
 
-// 同步壁纸数据到共享状态
-watch(wallpapers, (newWallpapers) => {
-  setWallpapers(newWallpapers)
-}, { immediate: true })
+// 结果数量
+const resultCount = computed(() => filteredWallpapers.value.length)
 
-// 监听路由变化，切换系列
-watch(() => route.meta?.series, (newSeries) => {
-  if (newSeries) {
-    initFromRoute(newSeries)
-  }
-}, { immediate: false })
+// 是否有激活的筛选条件
+const hasActiveFilters = computed(() => filterStore.hasActiveFilters())
 
-// 监听系列变化，重新加载数据
-watch(currentSeries, async (newSeries) => {
-  await Promise.all([
-    fetchWallpapers(newSeries),
-    fetchPopularityData(newSeries),
-  ])
-}, { immediate: false })
-
-// Filter（传入热门数据和当前系列）
-const { sortBy, formatFilter, categoryFilter, subcategoryFilter, categoryOptions, subcategoryOptions, filteredWallpapers, resultCount, hasActiveFilters, resetFilters } = useFilter(wallpapers, searchQuery, popularityData, currentSeries, weeklyPopularityData, monthlyPopularityData)
-
-// Modal
+// ========================================
+// Modal Management
+// ========================================
 const { isOpen, currentData, open, close, updateData } = useModal()
 
-// Current wallpaper for modal
 const currentWallpaper = computed(() => currentData.value)
 
-// Handlers
 function handleSelectWallpaper(wallpaper) {
   open(wallpaper)
 }
@@ -109,7 +86,7 @@ function handleSelectWallpaper(wallpaper) {
 function handlePrevWallpaper() {
   if (!currentWallpaper.value)
     return
-  const prev = getPrevWallpaper(currentWallpaper.value.id)
+  const prev = wallpaperStore.getPrevWallpaper(currentWallpaper.value.id)
   if (prev) {
     updateData(prev)
   }
@@ -118,33 +95,90 @@ function handlePrevWallpaper() {
 function handleNextWallpaper() {
   if (!currentWallpaper.value)
     return
-  const next = getNextWallpaper(currentWallpaper.value.id)
+  const next = wallpaperStore.getNextWallpaper(currentWallpaper.value.id)
   if (next) {
     updateData(next)
   }
 }
 
-// 重置所有筛选条件
-function handleReset() {
-  resetFilters()
-}
+// ========================================
+// Data Loading
+// ========================================
 
-// 重新加载当前系列
-function handleReload() {
-  fetchWallpapers(currentSeries.value, true)
-}
+/**
+ * 加载系列数据（防止重复加载）
+ */
+async function loadSeriesData(series) {
+  if (!series || isLoading.value)
+    return
 
-// Initialize
-onMounted(async () => {
-  // 如果路由带有系列参数，初始化系列
-  if (route.meta?.series) {
-    initFromRoute(route.meta.series)
+  isLoading.value = true
+
+  try {
+    // 设置默认排序方式
+    filterStore.setDefaultSortBySeries(series)
+
+    // 并行加载壁纸数据和热门数据
+    await Promise.all([
+      wallpaperStore.initSeries(series),
+      popularityStore.fetchPopularityData(series),
+    ])
   }
-  // 并行加载壁纸数据和热门数据
-  await Promise.all([
-    fetchWallpapers(currentSeries.value),
-    fetchPopularityData(currentSeries.value),
-  ])
+  finally {
+    isLoading.value = false
+  }
+}
+
+// ========================================
+// Filter Actions
+// ========================================
+
+function handleReset() {
+  filterStore.resetFilters(filterStore.sortBy)
+}
+
+function handleReload() {
+  wallpaperStore.initSeries(currentSeries.value, true)
+}
+
+// ========================================
+// Lifecycle & Watchers
+// ========================================
+
+// 监听路由变化，切换系列（仅在初始化后生效）
+watch(() => route.meta?.series, (newSeries, oldSeries) => {
+  if (!isInitialized.value)
+    return
+  if (newSeries && newSeries !== oldSeries) {
+    seriesStore.initFromRoute(newSeries)
+  }
+})
+
+// 监听系列变化，重新加载数据（仅在初始化后生效）
+watch(currentSeries, async (newSeries, oldSeries) => {
+  if (!isInitialized.value)
+    return
+  if (newSeries && newSeries !== oldSeries) {
+    await loadSeriesData(newSeries)
+  }
+})
+
+// 初始化（只执行一次）
+onMounted(async () => {
+  // 如果路由带有系列参数，初始化系列（不触发 watch）
+  const routeSeries = route.meta?.series
+  if (routeSeries) {
+    seriesStore.currentSeries = routeSeries
+  }
+  else if (!seriesStore.currentSeries) {
+    seriesStore.initSeries()
+  }
+
+  // 加载数据
+  await loadSeriesData(seriesStore.currentSeries)
+
+  // 标记初始化完成
+  isInitialized.value = true
 })
 </script>
 
@@ -154,36 +188,39 @@ onMounted(async () => {
       <!-- Announcement Banner -->
       <AnnouncementBanner />
 
-      <!-- Today's Pick - 暂时隐藏，后续可能改为3D轮播 -->
-      <!-- <TodayPick
-        v-if="wallpapers.length > 0 && !loading && currentSeries === 'desktop'"
-        :wallpapers="wallpapers"
-        @select="handleSelectWallpaper"
-      /> -->
-
-      <!-- 热门壁纸 - 仅电脑壁纸系列显示 -->
-      <PopularWallpapers
+      <!-- 热门壁纸 3D Coverflow - 仅电脑壁纸系列显示 -->
+      <PopularWallpapers3D
         v-if="currentSeries === 'desktop'"
         :series="currentSeries"
-        :wallpapers="wallpapers"
-        :popularity-data="popularityData"
+        :wallpapers="wallpaperStore.wallpapers"
+        :popularity-data="popularityStore.allTimeData"
         :loading="loading"
         @select="handleSelectWallpaper"
       />
+
+      <!-- 热门壁纸 2D 版本（备用，如需切换可替换上方组件）
+      <PopularWallpapers
+        v-if="currentSeries === 'desktop'"
+        :series="currentSeries"
+        :wallpapers="wallpaperStore.wallpapers"
+        :popularity-data="popularityStore.allTimeData"
+        :loading="loading"
+        @select="handleSelectWallpaper"
+      /> -->
 
       <!-- DIY 头像工具入口 - 仅头像系列显示 -->
       <DiyAvatarBanner v-if="currentSeries === 'avatar'" />
 
       <!-- Filter Panel -->
       <FilterPanel
-        v-model:sort-by="sortBy"
-        v-model:format-filter="formatFilter"
-        v-model:category-filter="categoryFilter"
-        v-model:subcategory-filter="subcategoryFilter"
+        v-model:sort-by="filterStore.sortBy"
+        v-model:format-filter="filterStore.formatFilter"
+        v-model:category-filter="filterStore.categoryFilter"
+        v-model:subcategory-filter="filterStore.subcategoryFilter"
         :category-options="categoryOptions"
         :subcategory-options="subcategoryOptions"
         :result-count="resultCount"
-        :total-count="total"
+        :total-count="wallpaperStore.total"
         :loading="loading"
         @reset="handleReset"
       />
@@ -206,12 +243,12 @@ onMounted(async () => {
         v-else
         :wallpapers="filteredWallpapers"
         :loading="loading"
-        :search-query="searchQuery"
-        :total-count="total"
+        :search-query="filterStore.searchQuery"
+        :total-count="wallpaperStore.total"
         :has-filters="hasActiveFilters"
-        :popularity-data="popularityData"
+        :popularity-data="popularityStore.allTimeData"
         @select="handleSelectWallpaper"
-        @reset-filters="resetFilters"
+        @reset-filters="handleReset"
       />
     </div>
 

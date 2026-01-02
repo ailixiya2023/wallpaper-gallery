@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { isMobileDevice } from '@/composables/useDevice'
-import { preloadWallpapers } from '@/composables/useWallpapers'
 import { DEVICE_SERIES } from '@/utils/constants'
 
 // ========================================
@@ -146,14 +145,6 @@ router.beforeEach((to, from, next) => {
     document.title = to.meta.title
   }
 
-  // 预加载系列数据（不阻塞路由导航）
-  if (to.meta?.series) {
-    // 异步预加载，不等待完成
-    preloadWallpapers(to.meta.series).catch((err) => {
-      console.warn(`Failed to preload ${to.meta.series}:`, err)
-    })
-  }
-
   // 循环检测：检查短时间内的导航次数
   const now = Date.now()
   if (now - lastNavigationTime > NAVIGATION_RESET_TIME) {
@@ -175,11 +166,6 @@ router.beforeEach((to, from, next) => {
   if (to.path === '/' && !isInternalNavigation) {
     const recommendedSeries = getRecommendedSeries()
     const targetPath = `/${recommendedSeries}`
-
-    // 预加载推荐系列的数据
-    preloadWallpapers(recommendedSeries).catch((err) => {
-      console.warn(`Failed to preload ${recommendedSeries}:`, err)
-    })
 
     // 安全检查：确保目标路径有效且不同于当前路径
     if (recommendedSeries && targetPath !== from.path) {

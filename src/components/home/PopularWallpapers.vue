@@ -7,6 +7,7 @@
 import { Autoplay, Pagination } from 'swiper/modules'
 import { Swiper, SwiperSlide } from 'swiper/vue'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useDevice } from '@/composables/useDevice'
 
 // Swiper 样式
 import 'swiper/css'
@@ -33,59 +34,71 @@ const props = defineProps({
 
 const emit = defineEmits(['select'])
 
+const { isMobile } = useDevice()
+
 // Swiper 实例引用
 const swiperRef = ref(null)
 
 // 排行榜动画状态
 const rankingAnimated = ref(false)
 
+// 轮播图图片加载状态 Map
+const carouselImageLoaded = ref({})
+
+// 排行榜图片加载状态 Map
+const rankingImageLoaded = ref({})
+
 // Swiper 配置
 const swiperModules = [Autoplay, Pagination]
 
-// 轮播图列表（取前5张）
+// 轮播图列表（取前5张）- 必须有热门数据才显示，避免闪烁
 const carouselList = computed(() => {
-  if (!props.popularityData?.length || !props.wallpapers?.length) {
-    return []
+  // 必须同时有热门数据和壁纸数据才显示
+  if (props.popularityData?.length && props.wallpapers?.length) {
+    return props.popularityData
+      .slice(0, 5)
+      .map((stat) => {
+        const wallpaper = props.wallpapers.find(w => w.filename === stat.filename)
+        if (wallpaper) {
+          return {
+            ...wallpaper,
+            downloadCount: stat.download_count || 0,
+            viewCount: stat.view_count || 0,
+            popularityScore: stat.popularity_score || 0,
+          }
+        }
+        return null
+      })
+      .filter(Boolean)
   }
 
-  return props.popularityData
-    .slice(0, 5)
-    .map((stat) => {
-      const wallpaper = props.wallpapers.find(w => w.filename === stat.filename)
-      if (wallpaper) {
-        return {
-          ...wallpaper,
-          downloadCount: stat.download_count || 0,
-          viewCount: stat.view_count || 0,
-          popularityScore: stat.popularity_score || 0,
-        }
-      }
-      return null
-    })
-    .filter(Boolean)
+  // 没有热门数据时返回空数组，显示骨架屏
+  return []
 })
 
-// 右侧排行榜列表（取前5名）
+// 右侧排行榜列表（取前5名）- 必须有热门数据才显示，避免闪烁
 const rankingList = computed(() => {
-  if (!props.popularityData?.length || !props.wallpapers?.length) {
-    return []
+  // 必须同时有热门数据和壁纸数据才显示
+  if (props.popularityData?.length && props.wallpapers?.length) {
+    return props.popularityData
+      .slice(0, 5)
+      .map((stat, index) => {
+        const wallpaper = props.wallpapers.find(w => w.filename === stat.filename)
+        if (wallpaper) {
+          return {
+            ...wallpaper,
+            rank: index + 1,
+            downloadCount: stat.download_count || 0,
+            viewCount: stat.view_count || 0,
+          }
+        }
+        return null
+      })
+      .filter(Boolean)
   }
 
-  return props.popularityData
-    .slice(0, 5)
-    .map((stat, index) => {
-      const wallpaper = props.wallpapers.find(w => w.filename === stat.filename)
-      if (wallpaper) {
-        return {
-          ...wallpaper,
-          rank: index + 1,
-          downloadCount: stat.download_count || 0,
-          viewCount: stat.view_count || 0,
-        }
-      }
-      return null
-    })
-    .filter(Boolean)
+  // 没有热门数据时返回空数组，显示骨架屏
+  return []
 })
 
 // 监听数据变化，触发动画
@@ -97,6 +110,24 @@ watch(rankingList, (newList) => {
     }, 100)
   }
 }, { immediate: true })
+
+// 监听轮播图列表变化，重置加载状态（只在列表项的 id 真正变化时）
+watch(carouselList, (newList, oldList) => {
+  const newIds = newList.map(w => w.id).join(',')
+  const oldIds = oldList?.map(w => w.id).join(',') || ''
+  if (newIds !== oldIds) {
+    carouselImageLoaded.value = {}
+  }
+})
+
+// 监听排行榜列表变化，重置加载状态（只在列表项的 id 真正变化时）
+watch(rankingList, (newList, oldList) => {
+  const newIds = newList.map(w => w.id).join(',')
+  const oldIds = oldList?.map(w => w.id).join(',') || ''
+  if (newIds !== oldIds) {
+    rankingImageLoaded.value = {}
+  }
+})
 
 onMounted(() => {
   if (rankingList.value.length > 0) {
@@ -129,6 +160,26 @@ function handleClick(wallpaper) {
   emit('select', wallpaper)
 }
 
+// 轮播图图片加载完成
+function handleCarouselImageLoad(id) {
+  carouselImageLoaded.value[id] = true
+}
+
+// 排行榜图片加载完成
+function handleRankingImageLoad(id) {
+  rankingImageLoaded.value[id] = true
+}
+
+// 检查轮播图图片是否已加载
+function isCarouselImageLoaded(id) {
+  return !!carouselImageLoaded.value[id]
+}
+
+// 检查排行榜图片是否已加载
+function isRankingImageLoaded(id) {
+  return !!rankingImageLoaded.value[id]
+}
+
 // 格式化数字
 function formatNumber(num) {
   if (num >= 1000) {
@@ -139,8 +190,8 @@ function formatNumber(num) {
 </script>
 
 <template>
-  <!-- Loading skeleton -->
-  <div v-if="loading" class="popular-section popular-section--loading">
+  <!-- Loading skeleton - 热门数据未加载完成时显示骨架屏 -->
+  <div v-if="carouselList.length === 0" class="popular-section popular-section--loading">
     <div class="popular-section__header">
       <div class="skeleton-badge" />
     </div>
@@ -154,7 +205,7 @@ function formatNumber(num) {
     </div>
   </div>
 
-  <!-- 有数据时显示 -->
+  <!-- 有数据时显示（即使热门数据还在加载，也显示默认内容） -->
   <div
     v-else-if="carouselList.length > 0"
     class="popular-section"
@@ -197,11 +248,23 @@ function formatNumber(num) {
               class="popular-slide"
               @click="handleClick(wallpaper)"
             >
+              <!-- 轮播图骨架屏 -->
+              <div v-if="!isCarouselImageLoaded(wallpaper.id)" class="slide-skeleton">
+                <div class="skeleton-shimmer" />
+                <div class="skeleton-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="M21 15l-5-5L5 21" />
+                  </svg>
+                </div>
+              </div>
               <img
                 :src="wallpaper.previewUrl || wallpaper.thumbnailUrl"
                 :alt="wallpaper.filename"
                 class="popular-slide__image"
-                loading="lazy"
+                :class="{ 'is-loaded': isCarouselImageLoaded(wallpaper.id) }"
+                @load="handleCarouselImageLoad(wallpaper.id)"
               >
             </div>
           </SwiperSlide>
@@ -209,8 +272,8 @@ function formatNumber(num) {
         <div class="swiper-pagination" />
       </div>
 
-      <!-- 右侧排行榜 -->
-      <div class="popular-ranking">
+      <!-- 右侧排行榜（手机端隐藏） -->
+      <div v-if="!isMobile" class="popular-ranking">
         <div class="popular-ranking__header">
           <span>🏆 排行榜</span>
         </div>
@@ -220,15 +283,20 @@ function formatNumber(num) {
             :key="item.id"
             class="ranking-item"
             :class="{ 'ranking-item--animated': rankingAnimated }"
-            :style="{ '--delay': `${index * 0.15}s` }"
+            :style="{ '--delay': `${index * 0.12}s` }"
             @click="handleClick(item)"
           >
             <div class="ranking-item__thumb-wrapper">
+              <!-- 排行榜缩略图骨架屏 -->
+              <div v-if="!isRankingImageLoaded(item.id)" class="thumb-skeleton">
+                <div class="skeleton-shimmer" />
+              </div>
               <img
                 :src="item.thumbnailUrl"
                 :alt="item.filename"
                 class="ranking-item__thumb"
-                loading="lazy"
+                :class="{ 'is-loaded': isRankingImageLoaded(item.id) }"
+                @load="handleRankingImageLoad(item.id)"
               >
               <div class="ranking-item__rank" :class="`ranking-item__rank--${item.rank}`">
                 {{ item.rank }}
@@ -313,16 +381,54 @@ function formatNumber(num) {
   cursor: pointer;
   aspect-ratio: 16 / 9;
   overflow: hidden;
+  background: var(--color-bg-secondary);
 }
 
 .popular-slide__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition:
+    transform 0.5s ease,
+    opacity 0.4s ease;
+  opacity: 0;
+
+  &.is-loaded {
+    opacity: 1;
+  }
 
   .popular-slide:hover & {
     transform: scale(1.05);
+  }
+}
+
+// 轮播图骨架屏
+.slide-skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-hover) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+
+  .skeleton-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+  }
+
+  .skeleton-icon {
+    z-index: 2;
+    color: var(--color-text-muted);
+    opacity: 0.4;
+
+    svg {
+      width: 48px;
+      height: 48px;
+      animation: pulse 2s ease-in-out infinite;
+    }
   }
 }
 
@@ -394,7 +500,7 @@ function formatNumber(num) {
   transform: translateX(20px);
 
   &--animated {
-    animation: slideInRight 0.5s ease forwards;
+    animation: slideInRight 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     animation-delay: var(--delay);
   }
 
@@ -425,13 +531,36 @@ function formatNumber(num) {
   border-radius: $radius-sm;
   overflow: hidden;
   flex-shrink: 0;
+  background: var(--color-bg-hover);
 }
 
 .ranking-item__thumb {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.4s ease;
+  opacity: 0;
+
+  &.is-loaded {
+    opacity: 1;
+  }
+}
+
+// 排行榜缩略图骨架屏
+.thumb-skeleton {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg-hover);
+  z-index: 1;
+
+  .skeleton-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+    animation: shimmer 1.5s infinite;
+  }
 }
 
 .ranking-item__rank {
@@ -556,6 +685,15 @@ function formatNumber(num) {
   }
   50% {
     opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
   }
 }
 </style>

@@ -5,18 +5,19 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 // ========================================
 export const BREAKPOINTS = {
   SM: 576, // 小屏手机
-  MD: 768, // 平板/大屏手机（移动端/PC端分界线）
-  LG: 992, // 小型桌面
+  MD: 768, // 大屏手机/小平板（移动端/平板分界线）
+  LG: 1024, // 平板/小型桌面（平板/PC端分界线）
   XL: 1200, // 大型桌面
+  XXL: 1440, // 超大桌面
 }
 
 // ========================================
 // 设备类型常量
 // ========================================
 export const DEVICE_TYPES = {
-  MOBILE: 'mobile',
-  TABLET: 'tablet',
-  DESKTOP: 'desktop',
+  MOBILE: 'mobile', // 手机 (< 768px)
+  TABLET: 'tablet', // 平板 (768px - 1024px)
+  DESKTOP: 'desktop', // 桌面 (>= 1024px)
 }
 
 /**
@@ -44,36 +45,36 @@ function detectDeviceByUserAgent() {
 
   // 检测移动设备
   const mobileKeywords = [
-    'android',
-    'webos',
     'iphone',
     'ipod',
+    'android.*mobile',
+    'webos',
     'blackberry',
     'iemobile',
     'opera mini',
-    'mobile',
+    'windows phone',
   ]
 
   // 检测平板设备
-  const tabletKeywords = ['ipad', 'tablet', 'playbook', 'silk']
+  const tabletKeywords = ['ipad', 'tablet', 'playbook', 'silk', 'android(?!.*mobile)']
 
-  // 检测是否为平板（iPad 特殊处理 - iOS 13+ 会标识为 Mac）
-  if (tabletKeywords.some(keyword => ua.includes(keyword))) {
-    return DEVICE_TYPES.TABLET
-  }
-
-  // iPad on iOS 13+ 检测
+  // iPad on iOS 13+ 检测（会标识为 Mac）
   if (ua.includes('macintosh') && detectTouchSupport()) {
     return DEVICE_TYPES.TABLET
   }
 
-  // 检测是否为手机
-  if (mobileKeywords.some(keyword => ua.includes(keyword))) {
-    // 排除平板（Android 平板通常没有 'mobile' 关键字）
-    if (ua.includes('android') && !ua.includes('mobile')) {
+  // 检测是否为平板
+  for (const keyword of tabletKeywords) {
+    if (new RegExp(keyword).test(ua)) {
       return DEVICE_TYPES.TABLET
     }
-    return DEVICE_TYPES.MOBILE
+  }
+
+  // 检测是否为手机
+  for (const keyword of mobileKeywords) {
+    if (new RegExp(keyword).test(ua)) {
+      return DEVICE_TYPES.MOBILE
+    }
   }
 
   return DEVICE_TYPES.DESKTOP
@@ -82,28 +83,43 @@ function detectDeviceByUserAgent() {
 /**
  * 综合判断设备类型
  * 结合 UA 检测、触摸支持、屏幕尺寸等多种因素
- * 优先使用窗口尺寸判断，UA 作为辅助
+ *
+ * 关键逻辑：
+ * - 手机横屏仍然是手机（通过 UA 判断）
+ * - 平板横屏仍然是平板（通过 UA 判断）
+ * - 屏幕宽度只作为辅助判断，UA 检测优先
  */
 function getDeviceType(windowWidth) {
-  // 优先基于窗口尺寸判断（响应式核心）
+  const uaDevice = detectDeviceByUserAgent()
+
+  // UA 明确是手机 → 无论横屏还是竖屏都是手机
+  // 这修复了手机横屏被错误识别为平板的问题
+  if (uaDevice === DEVICE_TYPES.MOBILE) {
+    return DEVICE_TYPES.MOBILE
+  }
+
+  // UA 明确是平板 → 无论横屏还是竖屏都是平板
+  if (uaDevice === DEVICE_TYPES.TABLET) {
+    return DEVICE_TYPES.TABLET
+  }
+
+  // UA 检测为桌面设备，使用屏幕尺寸判断
+  // 小于 768px → 手机（小窗口桌面浏览器模拟）
   if (windowWidth < BREAKPOINTS.MD) {
     return DEVICE_TYPES.MOBILE
   }
 
-  // 大屏幕情况下，结合 UA 判断
-  const uaDevice = detectDeviceByUserAgent()
-
-  // 如果 UA 明确识别为移动设备，但屏幕够大，仍然按桌面处理
-  // 这样可以正确处理开发者工具切换的情况
-  if (windowWidth >= BREAKPOINTS.MD) {
+  // 768px - 1024px 之间
+  if (windowWidth < BREAKPOINTS.LG) {
+    // 有触摸支持，可能是平板模式（如 Surface）
+    if (detectTouchSupport()) {
+      return DEVICE_TYPES.TABLET
+    }
+    // 否则认为是小桌面
     return DEVICE_TYPES.DESKTOP
   }
 
-  // 如果 UA 明确识别为移动设备或平板
-  if (uaDevice === DEVICE_TYPES.MOBILE || uaDevice === DEVICE_TYPES.TABLET) {
-    return DEVICE_TYPES.MOBILE
-  }
-
+  // 1024px 以上 → 桌面
   return DEVICE_TYPES.DESKTOP
 }
 
@@ -119,7 +135,11 @@ export function useDevice() {
 
   // 便捷判断属性
   const isMobile = computed(() => deviceType.value === DEVICE_TYPES.MOBILE)
+  const isTablet = computed(() => deviceType.value === DEVICE_TYPES.TABLET)
   const isDesktop = computed(() => deviceType.value === DEVICE_TYPES.DESKTOP)
+
+  // 组合判断：是否为移动端（手机或平板）
+  const isMobileOrTablet = computed(() => isMobile.value || isTablet.value)
 
   // 基于窗口尺寸的响应式断点判断（与 SCSS 保持一致）
   const isSmallMobile = computed(() => windowWidth.value < BREAKPOINTS.SM)
@@ -130,6 +150,10 @@ export function useDevice() {
 
   // 触摸设备检测
   const hasTouch = ref(detectTouchSupport())
+
+  // 屏幕方向检测（横屏/竖屏）
+  const isLandscape = computed(() => windowWidth.value > window.innerHeight)
+  const isPortrait = computed(() => !isLandscape.value)
 
   // 设备变化回调
   const deviceChangeCallbacks = ref([])
@@ -193,8 +217,14 @@ export function useDevice() {
     windowWidth,
     deviceType,
     isMobile,
+    isTablet,
     isDesktop,
+    isMobileOrTablet,
     hasTouch,
+
+    // 屏幕方向
+    isLandscape,
+    isPortrait,
 
     // 细粒度断点
     isSmallMobile,
@@ -220,8 +250,23 @@ export function detectDevice() {
 }
 
 /**
- * 检测是否为移动设备（非响应式）
+ * 检测是否为移动设备（非响应式）- 仅手机
  */
 export function isMobileDevice() {
   return detectDevice() === DEVICE_TYPES.MOBILE
+}
+
+/**
+ * 检测是否为平板设备（非响应式）
+ */
+export function isTabletDevice() {
+  return detectDevice() === DEVICE_TYPES.TABLET
+}
+
+/**
+ * 检测是否为移动端（手机或平板，非响应式）
+ */
+export function isMobileOrTabletDevice() {
+  const device = detectDevice()
+  return device === DEVICE_TYPES.MOBILE || device === DEVICE_TYPES.TABLET
 }

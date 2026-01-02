@@ -119,9 +119,11 @@ function handleFormatChange(value) {
   trackFilter('format', value)
 }
 
+// 移动端分类变化处理（来自 MobileCategoryDrawer，不重置子分类，由抽屉组件自行处理）
 function handleCategoryChange(value) {
   emit('update:categoryFilter', value)
-  emit('update:subcategoryFilter', 'all')
+  // 注意：移动端抽屉会在 handleConfirm 中同时发送父分类和子分类
+  // 这里不再强制重置子分类，由抽屉组件管理
   trackFilter('category', value)
 }
 

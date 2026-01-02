@@ -6,7 +6,7 @@
 // - 本地开发：使用此默认值
 // - 线上构建：GitHub Actions 会自动替换为图床最新 tag
 // - jsdelivr 缓存策略：@main 分支有缓存，@tag 版本无缓存
-export const CDN_VERSION = 'v1.1.2'
+export const CDN_VERSION = 'v1.1.7'
 
 // CDN URL 动态构建（防止静态分析提取完整链接）
 const _cdnParts = {
@@ -68,15 +68,17 @@ export const SERIES_CONFIG = {
   },
 }
 
-// 设备可见的系列（PC端显示所有系列，移动端显示mobile+avatar）
+// 设备可见的系列（PC端显示所有系列，平板显示所有系列，移动端显示mobile+avatar）
 export const DEVICE_SERIES = {
   desktop: ['desktop', 'mobile', 'avatar'], // PC端可见所有系列
-  mobile: ['mobile', 'avatar'], // 移动端保持不变
+  tablet: ['desktop', 'mobile', 'avatar'], // 平板可见所有系列（横屏看桌面壁纸，竖屏看手机壁纸）
+  mobile: ['mobile', 'avatar'], // 移动端只显示手机壁纸和头像
 }
 
 // 默认系列（根据设备类型）
 export const DEFAULT_SERIES = {
   desktop: 'desktop', // PC端默认显示电脑壁纸
+  tablet: 'desktop', // 平板默认显示电脑壁纸（适合横屏使用）
   mobile: 'mobile', // 移动端默认显示手机壁纸
 }
 
@@ -123,9 +125,9 @@ export const FORMAT_OPTIONS = [
 // ========================================
 export const RESOLUTION_THRESHOLDS = [
   { minWidth: 5120, label: '5K+', type: 'danger' },
-  { minWidth: 3841, label: '4K+', type: 'warning' },
+  { minWidth: 4096, label: '4K+', type: 'warning' },
   { minWidth: 3840, label: '4K', type: 'success' },
-  { minWidth: 2560, label: '2K', type: 'info' },
+  { minWidth: 2048, label: '2K', type: 'info' },
   { minWidth: 1920, label: '超清', type: 'primary' },
   { minWidth: 1280, label: '高清', type: 'secondary' },
   { minWidth: 0, label: '标清', type: 'secondary' },
@@ -137,9 +139,18 @@ export const THEMES = {
   DARK: 'dark',
 }
 
+// 主题模式（用户选择的模式）
+export const THEME_MODES = {
+  LIGHT: 'light', // 始终浅色
+  DARK: 'dark', // 始终深色
+  SYSTEM: 'system', // 跟随系统
+  AUTO: 'auto', // 根据时间自动切换（6:00-18:00 浅色，其他深色）
+}
+
 // localStorage 键名
 export const STORAGE_KEYS = {
   THEME: 'wallpaper-gallery-theme',
+  THEME_MODE: 'wallpaper-gallery-theme-mode', // 新增：主题模式
   SORT: 'wallpaper-gallery-sort',
   CATEGORY: 'wallpaper-gallery-category',
   VIEW_MODE: 'wallpaper-gallery-view-mode',

@@ -1,18 +1,29 @@
 // ========================================
-// 全局搜索状态 Composable
-// 用于在导航栏和首页之间共享搜索状态
+// 全局搜索状态 Composable (桥接到 Pinia Store)
 // ========================================
 
-import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useFilterStore } from '@/stores/filter'
+import { useWallpaperStore } from '@/stores/wallpaper'
 
-// 全局共享状态（模块级别单例）
-const searchQuery = ref('')
-const wallpapers = ref([])
-
+/**
+ * 全局搜索状态（桥接到 Pinia Store）
+ * @deprecated 建议直接使用 useFilterStore() 和 useWallpaperStore()
+ */
 export function useSearch() {
-  // 设置壁纸数据（供首页初始化）
-  const setWallpapers = (data) => {
-    wallpapers.value = data
+  const filterStore = useFilterStore()
+  const wallpaperStore = useWallpaperStore()
+
+  // 搜索关键词从 filterStore 获取
+  const { searchQuery } = storeToRefs(filterStore)
+
+  // 壁纸数据从 wallpaperStore 获取
+  const { wallpapers } = storeToRefs(wallpaperStore)
+
+  // 兼容旧 API：setWallpapers（现在不需要手动设置）
+  const setWallpapers = (_data) => {
+    // 不再需要手动设置，数据由 Store 管理
+    console.warn('setWallpapers is deprecated, data is now managed by WallpaperStore')
   }
 
   // 清除搜索

@@ -543,9 +543,33 @@ watch(() => props.wallpapers, async (newVal, oldVal) => {
   if (animationPending) {
     return
   }
+
+  // 如果是后台数据追加（长度增加但前面的元素不变），不触发重置
+  const isBackgroundAppend = oldVal
+    && oldVal.length > 0
+    && newVal
+    && newVal.length > oldVal.length
+    && oldVal.length >= PAGE_SIZE
+    && newVal[0]?.id === oldVal[0]?.id
+
+  // 后台追加数据时，只更新瀑布流分列，不重置显示数量
+  if (isBackgroundAppend) {
+    if (useMobileMasonry.value) {
+      // 先更新实际列高度
+      await nextTick()
+      updateColumnHeights()
+      // 只分配新增的元素
+      const newItems = newVal.slice(distributedCount.value)
+      if (newItems.length > 0) {
+        distributeToColumns(newItems)
+      }
+    }
+    return
+  }
+
   animationPending = true
 
-  // 重置显示数量
+  // 重置显示数量（仅在非后台追加时）
   displayCount.value = PAGE_SIZE
 
   // 重置瀑布流分列数据

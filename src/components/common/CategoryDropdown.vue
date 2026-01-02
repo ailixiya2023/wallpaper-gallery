@@ -215,7 +215,7 @@ onUnmounted(() => {
   z-index: 100;
 }
 
-// 触发器按钮 - 与 el-select 保持一致
+// 触发器按钮 - 适配深色模式
 .dropdown-trigger {
   display: flex;
   align-items: center;
@@ -223,16 +223,16 @@ onUnmounted(() => {
   padding: 0 11px;
   width: 160px;
   height: 32px;
-  background: var(--el-fill-color-blank, #fff);
-  border: 1px solid var(--el-border-color, #dcdfe6);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   font-size: 14px;
-  color: var(--el-text-color-regular, #606266);
+  color: var(--color-text-primary);
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: var(--el-border-color-hover, #c0c4cc);
+    border-color: var(--color-border-hover, var(--color-border));
   }
 
   &.is-open {
@@ -244,8 +244,7 @@ onUnmounted(() => {
   }
 
   &.has-selection {
-    // 选中后输入框文字保持默认颜色，不变紫色
-    color: var(--el-text-color-regular, #606266);
+    color: var(--color-text-primary);
   }
 }
 
@@ -260,20 +259,20 @@ onUnmounted(() => {
 .trigger-arrow {
   width: 14px;
   height: 14px;
-  color: var(--el-text-color-placeholder, #a8abb2);
+  color: var(--color-text-muted);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
 }
 
-// 下拉面板 - 根据是否有二级分类动态调整宽度
+// 下拉面板 - 适配深色模式
 .dropdown-panel {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  background: var(--el-bg-color-overlay, #fff);
-  border: 1px solid var(--el-border-color-light, #e4e7ed);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
-  box-shadow: var(--el-box-shadow-light, 0 2px 12px 0 rgba(0, 0, 0, 0.1));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   z-index: 1000;
 
@@ -290,20 +289,20 @@ onUnmounted(() => {
   max-height: 400px;
 }
 
-// 分类列表 - 加宽
+// 分类列表 - 适配深色模式
 .category-list {
   display: flex;
   flex-direction: column;
 
   &.primary-list {
     min-width: 180px;
-    border-right: 1px solid var(--el-border-color-lighter, #ebeef5);
-    background: var(--el-fill-color-light, #f5f7fa);
+    border-right: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
   }
 
   &.secondary-list {
     min-width: 200px;
-    background: var(--el-bg-color-overlay, #fff);
+    background: var(--color-bg-card);
   }
 }
 
@@ -311,9 +310,9 @@ onUnmounted(() => {
   padding: 10px 16px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--el-text-color-secondary, #909399);
-  border-bottom: 1px solid var(--el-border-color-lighter, #ebeef5);
-  background: var(--el-fill-color-lighter, #fafafa);
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg-hover);
 }
 
 .list-items {
@@ -331,12 +330,12 @@ onUnmounted(() => {
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--el-border-color, #dcdfe6);
+    background: var(--color-border);
     border-radius: 3px;
   }
 }
 
-// 分类项
+// 分类项 - 适配深色模式
 .category-item {
   display: flex;
   align-items: center;
@@ -344,15 +343,15 @@ onUnmounted(() => {
   width: 100%;
   padding: 10px 16px;
   font-size: 14px;
-  color: var(--el-text-color-regular, #606266);
+  color: var(--color-text-secondary);
   background: transparent;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover {
-    background: var(--el-fill-color-light, #f5f7fa);
-    color: var(--el-text-color-primary, #303133);
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
   }
 
   &.is-active {
@@ -376,8 +375,8 @@ onUnmounted(() => {
 
 .item-count {
   font-size: 12px;
-  color: var(--el-text-color-secondary, #909399);
-  background: var(--el-fill-color, #f0f2f5);
+  color: var(--color-text-muted);
+  background: var(--color-bg-hover);
   padding: 2px 8px;
   border-radius: 10px;
 
@@ -390,7 +389,7 @@ onUnmounted(() => {
 .item-arrow {
   width: 14px;
   height: 14px;
-  color: var(--el-text-color-placeholder, #a8abb2);
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
