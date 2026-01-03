@@ -283,8 +283,25 @@ const formattedDate = computed(() => props.wallpaper ? formatDate(props.wallpape
 const relativeTime = computed(() => props.wallpaper ? formatRelativeTime(props.wallpaper.createdAt) : '')
 const displayFilename = computed(() => props.wallpaper ? getDisplayFilename(props.wallpaper.filename) : '')
 
-// 原图分辨率信息（来自 JSON 数据，用于显示原图质量）
-const originalResolution = computed(() => props.wallpaper?.resolution || null)
+// 原图分辨率信息（如果 JSON 数据中有分辨率但标签可能过时，使用 getResolutionLabel 重新计算）
+const originalResolution = computed(() => {
+  if (!props.wallpaper?.resolution) {
+    return null
+  }
+  const res = props.wallpaper.resolution
+  // 如果分辨率对象有 width 和 height，使用 getResolutionLabel 确保标签是最新的（支持16K）
+  if (res.width && res.height) {
+    const updatedLabel = getResolutionLabel(res.width, res.height)
+    return {
+      width: res.width,
+      height: res.height,
+      label: updatedLabel.label,
+      type: updatedLabel.type,
+    }
+  }
+  // 如果没有 width/height，直接返回原始数据
+  return res
+})
 // 显示用的尺寸（显示当前加载图片的实际尺寸，即预览图尺寸）
 const displayDimensions = computed(() => {
   // 使用图片加载后获取的实际尺寸（预览图尺寸）
