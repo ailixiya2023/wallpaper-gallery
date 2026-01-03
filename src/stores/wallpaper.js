@@ -222,7 +222,7 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
   }
 
   /**
-   * 初始化系列（只加载前3个分类 - 首屏优化）
+   * 初始化系列（加载所有分类 - 确保数据完整）
    */
   async function initSeries(seriesId, forceRefresh = false) {
     // 如果已加载相同系列且有数据，跳过
@@ -241,28 +241,21 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
       // 1. 加载分类索引
       const indexData = await loadSeriesIndex(seriesId)
 
-      // 2. 只加载前3个分类（首屏优化）
-      const initialCategories = indexData.categories.slice(0, 3)
-      const categoryPromises = initialCategories.map(cat => loadCategory(seriesId, cat.file))
+      // 2. 加载所有分类（确保数据完整）
+      const allCategories = indexData.categories
+      const categoryPromises = allCategories.map(cat => loadCategory(seriesId, cat.file))
       const categoryDataArrays = await Promise.all(categoryPromises)
 
-      // 3. 合并数据
+      // 3. 合并所有数据
       wallpapers.value = categoryDataArrays.flat()
 
       // 4. 记录已加载的分类
-      initialCategories.forEach((cat) => {
+      allCategories.forEach((cat) => {
         loadedCategories.value.add(cat.file)
       })
 
       // 5. 记录初始加载数量（用于 UI 稳定显示）
       initialLoadedCount.value = wallpapers.value.length
-
-      // 6. 后台异步加载剩余分类（不阻塞）
-      const remainingCategories = indexData.categories.slice(3)
-      if (remainingCategories.length > 0) {
-        isBackgroundLoading.value = true
-        loadRemainingCategories(seriesId, remainingCategories)
-      }
     }
     catch (e) {
       console.error(`Failed to init series ${seriesId}:`, e)
@@ -287,6 +280,11 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     }
 
     for (const batch of batches) {
+      // 检查系列是否已切换，如果切换则停止加载
+      if (currentLoadedSeries.value !== seriesId) {
+        return
+      }
+
       // 过滤已加载的分类
       const unloadedBatch = batch.filter(cat => !loadedCategories.value.has(cat.file))
       if (unloadedBatch.length === 0)
@@ -296,6 +294,11 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
         // 并行加载批次内的所有分类
         const batchPromises = unloadedBatch.map(cat => loadCategory(seriesId, cat.file))
         const batchResults = await Promise.all(batchPromises)
+
+        // 再次检查系列是否已切换（加载完成后）
+        if (currentLoadedSeries.value !== seriesId) {
+          return
+        }
 
         // 合并本批次的数据
         const batchData = batchResults.flat()
@@ -317,9 +320,11 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
       }
     }
 
-    // 后台加载完成，更新状态
-    isBackgroundLoading.value = false
-    initialLoadedCount.value = wallpapers.value.length
+    // 后台加载完成，更新状态（仅当系列未切换时）
+    if (currentLoadedSeries.value === seriesId) {
+      isBackgroundLoading.value = false
+      initialLoadedCount.value = wallpapers.value.length
+    }
   }
 
   /**
