@@ -6,12 +6,21 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 /**
- * 获取当前时间的 ISO 字符串
- * timestamptz 类型会自动处理时区，直接发送 UTC 时间即可
- * @returns {string} ISO 格式字符串
+ * 获取北京时间的 ISO 字符串
+ * @returns {string} 北京时间 ISO 格式字符串（带 +08:00 时区）
  */
 function getCurrentTimeISO() {
-  return new Date().toISOString()
+  const now = new Date()
+  // 格式化为北京时间 ISO 字符串
+  const pad = n => String(n).padStart(2, '0')
+  const year = now.getFullYear()
+  const month = pad(now.getMonth() + 1)
+  const day = pad(now.getDate())
+  const hours = pad(now.getHours())
+  const minutes = pad(now.getMinutes())
+  const seconds = pad(now.getSeconds())
+  const ms = String(now.getMilliseconds()).padStart(3, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}+08:00`
 }
 
 /**
