@@ -1,14 +1,19 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import UpdateNotification from '@/components/common/UpdateNotification.vue'
 // import AppFooter from '@/components/layout/AppFooter.vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import GridSkeleton from '@/components/wallpaper/GridSkeleton.vue'
 
 import { useTheme } from '@/composables/useTheme'
+import { useVersionCheck } from '@/composables/useVersionCheck'
 
 // Theme
 const { initTheme } = useTheme()
+
+// Version check (启动版本检测)
+useVersionCheck()
 
 // Route
 const route = useRoute()
@@ -44,6 +49,9 @@ onMounted(() => {
     </main>
 
     <!-- <AppFooter /> -->
+
+    <!-- 版本更新提示 -->
+    <UpdateNotification />
   </div>
 </template>
 

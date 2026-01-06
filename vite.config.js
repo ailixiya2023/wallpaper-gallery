@@ -1,3 +1,5 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath, URL } from 'node:url'
 import { VantResolver } from '@vant/auto-import-resolver'
@@ -12,10 +14,38 @@ import { obfuscatePlugin } from './build/vite-plugin-obfuscate.js'
 // 是否生产环境
 const isProduction = process.env.NODE_ENV === 'production'
 
+// 读取 package.json 版本号
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8'))
+const APP_VERSION = pkg.version
+const BUILD_TIME = new Date().toISOString()
+
+/**
+ * 版本文件更新插件
+ * 在构建时自动更新 public/version.json
+ */
+function versionPlugin() {
+  return {
+    name: 'version-plugin',
+    buildStart() {
+      if (isProduction) {
+        const versionFile = path.resolve(__dirname, 'public/version.json')
+        const versionData = {
+          version: APP_VERSION,
+          buildTime: BUILD_TIME,
+        }
+        fs.writeFileSync(versionFile, JSON.stringify(versionData, null, 2))
+        console.log(`[version-plugin] Updated version.json to v${APP_VERSION}`)
+      }
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
+    versionPlugin(),
     AutoImport({
       resolvers: [ElementPlusResolver(), VantResolver()],
     }),
@@ -48,6 +78,11 @@ export default defineConfig({
     }),
   ].filter(Boolean),
   base: '/', // 子域名部署使用根路径
+  // 注入全局变量
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+    __BUILD_TIME__: JSON.stringify(BUILD_TIME),
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

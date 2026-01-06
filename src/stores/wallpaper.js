@@ -6,7 +6,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { isWorkerAvailable, workerDecodeAndParse } from '@/composables/useWorker'
 import { decodeData } from '@/utils/codec'
-import { SERIES_CONFIG } from '@/utils/constants'
+import { DATA_CACHE_BUSTER, SERIES_CONFIG } from '@/utils/constants'
 import { buildBingPreviewUrl, buildBingThumbnailUrl, buildBingUHDUrl, buildImageUrl } from '@/utils/format'
 
 export const useWallpaperStore = defineStore('wallpaper', () => {
@@ -364,7 +364,7 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
     }
 
     try {
-      const categoryUrl = `${seriesConfig.categoryBaseUrl}/${categoryFile}`
+      const categoryUrl = `${seriesConfig.categoryBaseUrl}/${categoryFile}${DATA_CACHE_BUSTER}`
       const response = await fetchWithRetry(categoryUrl)
       let data
       try {
@@ -536,7 +536,7 @@ export const useWallpaperStore = defineStore('wallpaper', () => {
         }
 
         try {
-          const yearUrl = `${seriesConfig.yearBaseUrl}/${yearInfo.file}`
+          const yearUrl = `${seriesConfig.yearBaseUrl}/${yearInfo.file}${DATA_CACHE_BUSTER}`
           const yearResponse = await fetchWithRetry(yearUrl)
           const yearData = await yearResponse.json()
 
