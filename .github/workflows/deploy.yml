@@ -150,7 +150,7 @@ jobs:
           RESPONSE=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
-            --data '{"files":["https://061129.xyz/version.json"]}')
+            --data '{"files":["https://wallpaper.061129.xyz/version.json"]}')
 
           # 检查响应
           SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
