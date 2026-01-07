@@ -311,36 +311,16 @@ async function toggleDeviceMode() {
     exitDeviceMode()
   }
   else {
-    // 进入真机模式：添加进入动画
+    // 进入真机模式：先设置状态让元素显示，再执行动画
     isDeviceMode.value = true
-    // 只在手机端添加 device-mode 类（会隐藏页面其他元素）
-    // 电脑端不添加，因为弹窗本身就是覆盖层
-    if (isMobile.value) {
-      document.body.classList.add('device-mode')
-    }
     showControls.value = true
-    document.body.classList.add('show-controls')
 
     await nextTick()
     animateDeviceModeIn()
-
-    // 清理旧定时器并设置新定时器
-    if (deviceModeTimer) {
-      clearTimeout(deviceModeTimer)
-      deviceModeTimer = null
-    }
-    // 5秒后自动隐藏控制按钮（延长显示时间，让用户看到退出提示）
-    deviceModeTimer = setTimeout(() => {
-      if (isDeviceMode.value) {
-        showControls.value = false
-        document.body.classList.remove('show-controls')
-      }
-      deviceModeTimer = null
-    }, 5000)
   }
 }
 
-// 真机模式进入动画（优化性能，使用硬件加速）
+// 真机模式进入动画（优化性能，使用硬件加速 + 背景过渡动画 + 退出按钮入场）
 function animateDeviceModeIn() {
   if (!phoneFrameRef.value)
     return
@@ -349,6 +329,11 @@ function animateDeviceModeIn() {
   const phoneFrameOverlay = phoneFrameRef.value
   const phoneFrame = phoneFrameOverlay.querySelector('.phone-frame')
   if (!phoneFrame)
+    return
+
+  // 获取弹窗遮罩层（通过最近的父元素查找）
+  const modalOverlay = phoneFrameOverlay.closest('.portrait-modal-overlay')
+  if (!modalOverlay)
     return
 
   // 启用硬件加速，优化性能
@@ -364,48 +349,117 @@ function animateDeviceModeIn() {
     y: 30,
   })
 
-  // 执行进入动画（使用更流畅的缓动函数和更短的时长）
-  gsap.to(phoneFrame, {
+  // 创建时间轴，统一控制所有动画
+  const tl = gsap.timeline()
+
+  // 1. 背景颜色过渡动画（从朦胧遮罩到白色背景）
+  tl.to(modalOverlay, {
+    background: '#ffffff',
+    backdropFilter: 'blur(0px)',
+    duration: 0.3,
+    ease: 'power2.out',
+  })
+
+  // 2. 手机框架进入动画（与背景动画同时开始）
+  tl.to(phoneFrame, {
     scale: 1,
     opacity: 1,
     y: 0,
-    duration: 0.4, // 缩短动画时长，更快速流畅
-    ease: 'power2.out', // 使用更简单的缓动函数，性能更好
-    force3D: true, // 强制使用 3D 变换，启用硬件加速
+    duration: 0.4,
+    ease: 'back.out(1.2)', // 使用弹性效果
+    force3D: true,
     onComplete: () => {
       // 动画完成后清理 will-change，避免影响后续性能
       gsap.set(phoneFrame, { willChange: 'auto', clearProps: 'force3D' })
     },
-  })
+  }, 0)
 
-  // 不修改弹窗背景，完全通过 CSS 类控制
-
-  // 控制按钮淡入（延迟更多，让手机框架动画先完成）
+  // 3. 底部信息栏淡入（延迟执行，让手机框架动画先完成）
   if (infoRef.value) {
-    gsap.fromTo(infoRef.value, {
+    tl.fromTo(infoRef.value, {
       opacity: 0,
       y: 10,
     }, {
       opacity: 1,
       y: 0,
       duration: 0.25,
-      delay: 0.2, // 延迟执行，避免同时动画
+      delay: 0.4, // 稍微延迟，让退出按钮先入场
       ease: 'power2.out',
     })
   }
 }
 
-// 退出真机显示模式（只退出真机模式，不影响弹窗状态，无动画）
+// 退出真机显示模式（只退出真机模式，不影响弹窗状态，添加背景过渡动画）
 function exitDeviceMode() {
-  // 直接退出真机模式状态，不执行动画，不修改任何样式
-  // 背景颜色完全由 CSS 类控制，移除类后自动恢复
-  isDeviceMode.value = false
-  document.body.classList.remove('device-mode')
-  document.body.classList.remove('show-controls')
-  showControls.value = false
+  const phoneFrameOverlay = phoneFrameRef.value
+  if (!phoneFrameOverlay)
+    return
+
+  const phoneFrame = phoneFrameOverlay.querySelector('.phone-frame')
+  const modalOverlay = phoneFrameOverlay.closest('.portrait-modal-overlay')
+  if (!modalOverlay)
+    return
+
+  // 获取图片容器
+  const imageContainer = modalOverlay.querySelector('.portrait-image-container')
+  const modalContent = modalOverlay.querySelector('.portrait-modal-content')
+
+  // 清理定时器
+  if (deviceModeTimer) {
+    clearTimeout(deviceModeTimer)
+    deviceModeTimer = null
+  }
+
+  // 提前用 GSAP 设置所有需要恢复的样式，避免 CSS 类移除时突变
+  if (imageContainer) {
+    gsap.set(imageContainer, {
+      position: 'relative',
+      inset: 'auto',
+      minHeight: isMobile.value ? '55vh' : '60vh',
+      background: 'var(--color-bg-primary)',
+    })
+  }
+
+  if (modalContent) {
+    gsap.set(modalContent, {
+      width: isMobile.value ? '95vw' : '500px',
+      height: 'auto',
+      maxWidth: isMobile.value ? '100%' : '500px',
+      maxHeight: isMobile.value ? '95vh' : '90vh',
+      borderRadius: 'var(--radius-xl)',
+      boxShadow: 'var(--shadow-xl)',
+    })
+  }
+
+  // 手机框架退出动画
+  if (phoneFrame) {
+    gsap.to(phoneFrame, {
+      scale: 0.9,
+      opacity: 0,
+      y: 30,
+      duration: 0.25,
+      ease: 'power2.in',
+    })
+  }
+
+  // 背景动画
+  gsap.to(modalOverlay, {
+    background: 'var(--color-bg-modal)',
+    backdropFilter: 'blur(12px)',
+    duration: 0.3,
+    ease: 'power2.out',
+  })
+
+  // 等待背景动画完成后设置状态
+  setTimeout(() => {
+    isDeviceMode.value = false
+    document.body.classList.remove('device-mode')
+    document.body.classList.remove('show-controls')
+    showControls.value = false
+  }, 300)
 }
 
-// 真机模式下点击屏幕切换控制按钮显示
+// 真机模式下点击屏幕切换底部信息栏显示
 function toggleControls() {
   if (isDeviceMode.value) {
     showControls.value = !showControls.value
@@ -497,8 +551,8 @@ onUnmounted(() => {
       <div ref="contentRef" class="portrait-modal-content" :class="{ 'is-device-mode-content': isDeviceMode && isMobile && canUseDeviceMode, 'is-avatar-content': isAvatarSeries }">
         <!-- Close Button -->
         <button
+          v-if="!isDeviceMode"
           class="modal-close"
-          :class="{ 'is-hidden': isDeviceMode && !showControls }"
           aria-label="关闭"
           @click="handleClose"
         >
@@ -507,20 +561,18 @@ onUnmounted(() => {
           </svg>
         </button>
 
-        <!-- 真机模式退出提示 -->
-        <div
+        <!-- 左上角退出按钮（胶囊样式，始终可见） -->
+        <button
           v-if="isDeviceMode && canUseDeviceMode"
-          class="device-mode-exit-hint"
-          :class="{ 'is-visible': showControls }"
+          class="device-mode-exit-button"
+          aria-label="退出真机显示"
           @click="exitDeviceMode"
         >
-          <div class="hint-content">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-            <span>点击退出真机显示</span>
-          </div>
-        </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+          <span>退出真机</span>
+        </button>
 
         <!-- Navigation Buttons -->
         <button
@@ -844,7 +896,80 @@ onUnmounted(() => {
   }
 }
 
-// 真机模式退出提示
+// 左上角退出真机显示按钮（胶囊样式，始终可见）
+.device-mode-exit-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 20px; // 胶囊圆角
+  background: #000000;
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  z-index: 10001; // 在悬浮球（10000）之上
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.25),
+    0 2px 10px rgba(0, 0, 0, 0.2),
+    0 0 0 2px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    color: #ffffff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+  }
+
+  span {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  // 悬浮效果
+  &:hover {
+    transform: translateY(-2px);
+    background: #000000;
+    box-shadow:
+      0 6px 28px rgba(0, 0, 0, 0.35),
+      0 4px 16px rgba(0, 0, 0, 0.25),
+      0 0 0 3px rgba(255, 255, 255, 0.15);
+  }
+
+  // 点击效果
+  &:active {
+    transform: translateY(0);
+    background: #000000;
+    box-shadow:
+      0 2px 12px rgba(0, 0, 0, 0.2),
+      0 1px 6px rgba(0, 0, 0, 0.15);
+  }
+
+  // 移动端优化
+  @include mobile-only {
+    top: 15px;
+    left: 15px;
+    height: 36px;
+    padding: 0 12px;
+    font-size: 13px;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+}
+
+// 真机模式退出提示（已废弃，保留样式）
 .device-mode-exit-hint {
   position: fixed;
   top: 20px;
