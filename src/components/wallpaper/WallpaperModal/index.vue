@@ -128,8 +128,9 @@ const displayUrl = computed(() => {
 // GSAP 入场动画
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
-    // 追踪壁纸预览事件
-    if (props.wallpaper) {
+    // 如果使用 DesktopModal，由它自己处理统计，这里不重复调用
+    if (!useDesktopModal.value && props.wallpaper) {
+      // 追踪壁纸预览事件
       trackWallpaperPreview(props.wallpaper)
       // 记录到 Supabase 统计（异步 RPC）
       recordView(props.wallpaper, currentSeries.value)

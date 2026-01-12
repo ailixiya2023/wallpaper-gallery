@@ -18,6 +18,17 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 // 静态统计文件路径
 const STATS_BASE_URL = '/data/stats'
 
+// 乐观更新回调（用于通知 store 刷新）
+let onOptimisticUpdateCallback = null
+
+/**
+ * 注册乐观更新回调
+ * @param {Function} callback - 回调函数
+ */
+export function onOptimisticUpdate(callback) {
+  onOptimisticUpdateCallback = callback
+}
+
 /**
  * 检查 Supabase 是否配置
  */
@@ -113,7 +124,12 @@ export function recordView(wallpaper, series) {
   // 1. 乐观更新（立即生效）
   incrementOptimistic(imageId, 'view')
 
-  // 2. 异步写入 Supabase（静默失败）
+  // 2. 通知 store 刷新（触发 UI 更新）
+  if (onOptimisticUpdateCallback) {
+    onOptimisticUpdateCallback()
+  }
+
+  // 3. 异步写入 Supabase（静默失败）
   if (isSupabaseConfigured()) {
     callRPC('increment_view', {
       img_id: imageId,
@@ -138,7 +154,12 @@ export function recordDownload(wallpaper, series) {
   // 1. 乐观更新（立即生效）
   incrementOptimistic(imageId, 'download')
 
-  // 2. 异步写入 Supabase（静默失败）
+  // 2. 通知 store 刷新（触发 UI 更新）
+  if (onOptimisticUpdateCallback) {
+    onOptimisticUpdateCallback()
+  }
+
+  // 3. 异步写入 Supabase（静默失败）
   if (isSupabaseConfigured()) {
     callRPC('increment_download', {
       img_id: imageId,

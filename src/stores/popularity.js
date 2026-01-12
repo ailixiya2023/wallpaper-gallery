@@ -12,6 +12,7 @@ import {
 import {
   loadStaticStats,
   loadStatsFromSupabase,
+  onOptimisticUpdate,
 } from '@/services/statsService'
 
 export const usePopularityStore = defineStore('popularity', () => {
@@ -31,21 +32,35 @@ export const usePopularityStore = defineStore('popularity', () => {
   // 是否已加载
   const loaded = ref(false)
 
+  // 乐观更新版本号（用于触发 computed 重新计算）
+  const optimisticVersion = ref(0)
+
   // ========================================
   // Getters
   // ========================================
 
-  // 热门数据（按浏览量排序的数组）
+  // 热门数据（按浏览量排序的数组）- 合并乐观更新
   const allTimeData = computed(() => {
+    // 依赖 optimisticVersion 触发响应式更新
+    // eslint-disable-next-line no-unused-expressions
+    optimisticVersion.value
+    const queue = getOptimisticQueue()
     const entries = Array.from(statsMap.value.entries())
     return entries
-      .map(([imageId, stats]) => ({
-        filename: imageId,
-        image_id: imageId,
-        view_count: stats.views || 0,
-        download_count: stats.downloads || 0,
-        popularity_score: (stats.views || 0) + (stats.downloads || 0) * 2,
-      }))
+      .map(([imageId, stats]) => {
+        // 合并乐观更新
+        const optimisticViews = queue.views[imageId] || 0
+        const optimisticDownloads = queue.downloads[imageId] || 0
+        const views = (stats.views || 0) + optimisticViews
+        const downloads = (stats.downloads || 0) + optimisticDownloads
+        return {
+          filename: imageId,
+          image_id: imageId,
+          view_count: views,
+          download_count: downloads,
+          popularity_score: views + downloads * 2,
+        }
+      })
       .sort((a, b) => b.popularity_score - a.popularity_score)
   })
 
@@ -192,6 +207,11 @@ export const usePopularityStore = defineStore('popularity', () => {
     currentSeries.value = ''
     loaded.value = false
   }
+
+  // 注册乐观更新回调，当 recordView/recordDownload 被调用时触发 UI 更新
+  onOptimisticUpdate(() => {
+    optimisticVersion.value++
+  })
 
   return {
     // State
