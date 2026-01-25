@@ -45,6 +45,11 @@
     "downloads": 0
   },
   {
+    "image_id": "bing-2026-01-12.jpg",
+    "views": 11,
+    "downloads": 1
+  },
+  {
     "image_id": "bing-2026-01-10.jpg",
     "views": 11,
     "downloads": 3
@@ -55,13 +60,18 @@
     "downloads": 2
   },
   {
-    "image_id": "bing-2026-01-12.jpg",
+    "image_id": "bing-2026-01-08.jpg",
     "views": 10,
     "downloads": 1
   },
   {
-    "image_id": "bing-2026-01-08.jpg",
-    "views": 10,
+    "image_id": "bing-2026-01-18.jpg",
+    "views": 8,
+    "downloads": 0
+  },
+  {
+    "image_id": "bing-2026-01-19.jpg",
+    "views": 7,
     "downloads": 1
   },
   {
@@ -71,16 +81,6 @@
   },
   {
     "image_id": "bing-2026-01-14.jpg",
-    "views": 6,
-    "downloads": 1
-  },
-  {
-    "image_id": "bing-2026-01-18.jpg",
-    "views": 6,
-    "downloads": 0
-  },
-  {
-    "image_id": "bing-2026-01-19.jpg",
     "views": 6,
     "downloads": 1
   },
@@ -496,6 +496,11 @@
   },
   {
     "image_id": "微信图片_20260120161635_519_4.jpg",
+    "views": 1,
+    "downloads": 0
+  },
+  {
+    "image_id": "bing-2026-01-25.jpg",
     "views": 1,
     "downloads": 0
   }
